@@ -2,25 +2,325 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
+
+  --brand-blue: #223c85;
+  --brand-blue-soft: rgba(34, 60, 133, 0.2);
+  --brand-teal: #14b8a6;
+  --brand-green: #65cf72;
+  --slate-50: #f8fafc;
+  --slate-900: #0f172a;
+  --neutral-cream: #f7f7f5;
+  --footer-bg: #111111;
+
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand: var(--brand-blue);
+  --color-brand-soft: var(--brand-blue-soft);
+  --color-brand-teal: var(--brand-teal);
+  --color-brand-green: var(--brand-green);
+  --color-cream: var(--neutral-cream);
+  --color-footer: var(--footer-bg);
+  --font-sans: var(--font-poppins), Arial, Helvetica, sans-serif;
+  --font-display: var(--font-reem-kufi), Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
+html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+/* ---------- Reveal-on-scroll utilities ---------- */
+.reveal {
+  transition-property: opacity, transform, filter;
+  transition-timing-function: var(--ease-out-soft);
+  transition-duration: 800ms;
+  will-change: opacity, transform;
+}
+
+.reveal-fade-up {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+}
+.reveal-fade-down {
+  opacity: 0;
+  transform: translate3d(0, -28px, 0);
+}
+.reveal-fade-left {
+  opacity: 0;
+  transform: translate3d(-28px, 0, 0);
+}
+.reveal-fade-right {
+  opacity: 0;
+  transform: translate3d(28px, 0, 0);
+}
+.reveal-fade-in {
+  opacity: 0;
+}
+.reveal-scale-in {
+  opacity: 0;
+  transform: scale(0.92);
+}
+.reveal-blur-in {
+  opacity: 0;
+  filter: blur(12px);
+  transform: translate3d(0, 14px, 0);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
+}
+
+/* ---------- Auto-play page-load animations ---------- */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 32px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fade-in-soft {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float-y {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -6px, 0);
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes image-crossfade {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in 900ms var(--ease-out-soft) backwards;
+}
+.animate-fade-in {
+  animation: fade-in-soft 900ms var(--ease-out-soft) backwards;
+}
+.animate-pop-in {
+  animation: pop-in 700ms var(--ease-out-back) backwards;
+}
+.animate-float {
+  animation: float-y 5s ease-in-out infinite;
+}
+.animate-image-crossfade {
+  animation: image-crossfade 520ms var(--ease-out-soft) backwards;
+}
+.animate-page-enter {
+  animation: page-enter 520ms var(--ease-out-soft) backwards;
+}
+
+/* ---------- Card shine sweep on hover ---------- */
+.card-shine {
+  position: relative;
+  isolation: isolate;
+}
+.card-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.18) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  transition: transform 900ms var(--ease-out-soft);
+}
+.group:hover .card-shine::after {
+  transform: translateX(120%);
+}
+
+/* ---------- Nav active indicator ---------- */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  height: 2px;
+  width: 0;
+  background: currentColor;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  transition: width 280ms var(--ease-out-soft), opacity 280ms ease;
+  opacity: 0;
+}
+.nav-link:hover::after {
+  width: 60%;
+  opacity: 0.5;
+}
+.nav-link[data-active="true"]::after {
+  width: 80%;
+  opacity: 1;
+}
+
+/* ---------- Journey timeline animations ---------- */
+.timeline-spine {
+  transform: scaleY(0);
+  transform-origin: top center;
+  transition: transform 1800ms linear;
+}
+.timeline.is-active .timeline-spine {
+  transform: scaleY(1);
+}
+
+.timeline-dot {
+  opacity: 0;
+  scale: 0;
+  transform-origin: center;
+  transition: opacity 420ms ease-out, scale 520ms var(--ease-out-back);
+  transition-delay: calc(160ms + var(--i, 0) * 500ms);
+}
+.timeline.is-active .timeline-dot {
+  opacity: 1;
+  scale: 1;
+}
+
+@keyframes timeline-pulse {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+.timeline-dot-pulse {
+  opacity: 0;
+}
+.timeline.is-active .timeline-dot-pulse {
+  animation: timeline-pulse 1500ms var(--ease-out-soft) forwards;
+  animation-delay: calc(220ms + var(--i, 0) * 500ms);
+}
+
+.timeline-card {
+  opacity: 0;
+  transform: translate3d(36px, 0, 0);
+  transition: opacity 620ms ease-out, transform 720ms var(--ease-out-soft);
+  transition-delay: calc(320ms + var(--i, 0) * 500ms);
+}
+@media (min-width: 768px) {
+  .timeline-card-left {
+    transform: translate3d(-36px, 0, 0);
+  }
+}
+.timeline.is-active .timeline-card {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+/* ---------- Reduced motion respect ---------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal,
+  .reveal.is-visible,
+  .animate-rise-in,
+  .animate-fade-in,
+  .animate-pop-in,
+  .animate-float,
+  .animate-image-crossfade,
+  .animate-page-enter,
+  .timeline-spine,
+  .timeline-dot,
+  .timeline-dot-pulse,
+  .timeline-card {
+    transition: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    scale: 1 !important;
+    filter: none !important;
+  }
+  .card-shine::after,
+  .nav-link::after {
+    display: none !important;
+  }
 }

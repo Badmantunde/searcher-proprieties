@@ -1,0 +1,22 @@
+import type { Metadata } from "next";
+import Nav from "../components/Nav";
+import Footer from "../components/Footer";
+import VideosHero from "../components/videos-page/VideosHero";
+import VideosGrid from "../components/videos-page/VideosGrid";
+
+export const metadata: Metadata = {
+  title: "Property Videos — Searcher Properties",
+  description:
+    "Explore Searcher Properties through cinematic walkthroughs, drone tours, and development updates.",
+};
+
+export default function VideosPage() {
+  return (
+    <main className="flex min-h-screen flex-col bg-white">
+      <Nav />
+      <VideosHero />
+      <VideosGrid />
+      <Footer />
+    </main>
+  );
+}

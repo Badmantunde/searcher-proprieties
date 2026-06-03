@@ -1,0 +1,69 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import Nav from "../../../components/Nav";
+import Footer from "../../../components/Footer";
+import {
+  DEVELOPING_PROJECTS,
+  getDevelopingBySlug,
+} from "../../../components/properties-page/DevelopingCard";
+import PropertyGallery from "../../../components/properties-page/PropertyGallery";
+import PropertyContactCard from "../../../components/properties-page/PropertyContactCard";
+import DevelopingInfoCard from "../../../components/properties-page/developing/DevelopingInfoCard";
+
+type RouteParams = { slug: string };
+
+export function generateStaticParams(): RouteParams[] {
+  return DEVELOPING_PROJECTS.map((p) => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const project = getDevelopingBySlug(slug);
+  if (!project) return { title: "Project not found — Searcher Properties" };
+  return {
+    title: `${project.title} — Searcher Properties`,
+    description: `Pre-launch investment opportunity at ${project.location}. ${project.progress}% complete, expected ${project.completion}. ${project.leaseLabel}.`,
+  };
+}
+
+export default async function DevelopingDetailPage({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}) {
+  const { slug } = await params;
+  const project = getDevelopingBySlug(slug);
+  if (!project) notFound();
+
+  return (
+    <main className="flex min-h-screen flex-col bg-white">
+      <Nav />
+
+      <PropertyGallery
+        alt={project.title}
+        hero={project.gallery.hero}
+        thumbnails={project.gallery.thumbnails}
+      />
+
+      <section className="px-4 pb-16 pt-10 sm:px-8 sm:pb-20 sm:pt-14 lg:px-16 lg:pb-24 lg:pt-16">
+        <div className="mx-auto flex max-w-[1280px] flex-col gap-6 sm:gap-8">
+          <DevelopingInfoCard
+            location={project.location}
+            title={project.title}
+            units={project.units}
+            progress={project.progress}
+            completion={project.completion}
+            leaseLabel={project.leaseLabel}
+          />
+          <PropertyContactCard propertyTitle={project.title} />
+        </div>
+      </section>
+
+      <Footer />
+    </main>
+  );
+}
