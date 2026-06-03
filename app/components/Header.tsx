@@ -17,9 +17,9 @@ export default function Header() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/70" />
 
-      <div className="relative z-10 mx-auto flex max-w-[1440px] flex-col px-6 sm:px-10 lg:px-16">
+      <div className="relative z-10 mx-auto flex max-w-[1440px] flex-col px-6 pb-32 sm:px-10 sm:pb-40 lg:px-16 lg:pb-48">
         {/* Hero copy (sits below the fixed Nav) */}
-        <div className="flex flex-col items-center pt-32 pb-40 text-center sm:pt-40 lg:pt-52 lg:pb-56">
+        <div className="flex w-full flex-col items-center pt-32 text-center sm:pt-40 lg:pt-52">
           <h1
             className="font-display animate-rise-in max-w-4xl text-5xl font-bold leading-[1.05] tracking-tight text-white sm:text-6xl lg:text-7xl xl:text-[88px] xl:leading-[1.05]"
             style={{ animationDelay: "120ms" }}
@@ -35,9 +35,68 @@ export default function Header() {
             Premium homes and investment properties built with trust, quality,
             and long-term value.
           </p>
+
+          {/* Search bar — 40px below subtitle */}
           <div
-            className="animate-rise-in mt-10 flex flex-col items-center gap-4 sm:flex-row md:hidden"
+            className="animate-rise-in mt-10 w-full max-w-5xl"
             style={{ animationDelay: "520ms" }}
+          >
+            <form
+              action="/properties"
+              method="get"
+              className="rounded-2xl bg-brand p-3 shadow-2xl shadow-black/20 sm:p-4"
+            >
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1.1fr_auto]">
+                <div className="flex h-14 items-center rounded-xl bg-white px-5">
+                  <input
+                    name="q"
+                    placeholder="Keyword"
+                    className="w-full bg-transparent text-base text-slate-700 placeholder:text-slate-500 focus:outline-none"
+                  />
+                </div>
+                <div className="flex h-14 items-center justify-between rounded-xl bg-white px-5">
+                  <select
+                    name="category"
+                    defaultValue=""
+                    className="w-full appearance-none bg-transparent text-base text-slate-500 focus:outline-none"
+                  >
+                    <option value="" disabled>
+                      Categories
+                    </option>
+                    <option value="residential">Residential</option>
+                    <option value="commercial">Commercial</option>
+                    <option value="land">Land</option>
+                  </select>
+                  <Chevron />
+                </div>
+                <div className="flex h-14 items-center justify-between rounded-xl bg-white px-5">
+                  <select
+                    name="contract"
+                    defaultValue=""
+                    className="w-full appearance-none bg-transparent text-base text-slate-500 focus:outline-none"
+                  >
+                    <option value="" disabled>
+                      Contract Types
+                    </option>
+                    <option value="sale">For Sale</option>
+                    <option value="rent">For Rent</option>
+                    <option value="lease">For Lease</option>
+                  </select>
+                  <Chevron />
+                </div>
+                <button
+                  type="submit"
+                  className="h-14 rounded-xl bg-brand px-8 text-base font-semibold text-white ring-1 ring-white/30 transition-colors hover:bg-[#1a3070]"
+                >
+                  Submit
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div
+            className="animate-rise-in mt-8 flex flex-col items-center gap-4 sm:flex-row md:hidden"
+            style={{ animationDelay: "620ms" }}
           >
             <Link
               href="/properties"
@@ -54,66 +113,6 @@ export default function Header() {
           </div>
         </div>
       </div>
-
-      {/* Search bar */}
-      <div
-        className="animate-rise-in relative z-10 mx-auto -mt-24 mb-[-3rem] w-full max-w-5xl px-6 sm:mb-[-3.5rem] lg:px-0"
-        style={{ animationDelay: "620ms" }}
-      >
-        <form
-          action="/properties"
-          method="get"
-          className="rounded-2xl bg-brand p-3 shadow-2xl shadow-black/20 sm:p-4"
-        >
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1.1fr_auto]">
-            <div className="flex h-14 items-center rounded-xl bg-white px-5">
-              <input
-                name="q"
-                placeholder="Keyword"
-                className="w-full bg-transparent text-base text-slate-700 placeholder:text-slate-500 focus:outline-none"
-              />
-            </div>
-            <div className="flex h-14 items-center justify-between rounded-xl bg-white px-5">
-              <select
-                name="category"
-                defaultValue=""
-                className="w-full appearance-none bg-transparent text-base text-slate-500 focus:outline-none"
-              >
-                <option value="" disabled>
-                  Categories
-                </option>
-                <option value="residential">Residential</option>
-                <option value="commercial">Commercial</option>
-                <option value="land">Land</option>
-              </select>
-              <Chevron />
-            </div>
-            <div className="flex h-14 items-center justify-between rounded-xl bg-white px-5">
-              <select
-                name="contract"
-                defaultValue=""
-                className="w-full appearance-none bg-transparent text-base text-slate-500 focus:outline-none"
-              >
-                <option value="" disabled>
-                  Contract Types
-                </option>
-                <option value="sale">For Sale</option>
-                <option value="rent">For Rent</option>
-                <option value="lease">For Lease</option>
-              </select>
-              <Chevron />
-            </div>
-            <button
-              type="submit"
-              className="h-14 rounded-xl bg-brand px-8 text-base font-semibold text-white ring-1 ring-white/30 transition-colors hover:bg-[#1a3070]"
-            >
-              Submit
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="h-16 sm:h-20" />
     </section>
   );
 }
