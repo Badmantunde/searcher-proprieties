@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { mapsHref, whatsappHref } from "../../lib/links";
-import { APT_DETAILS_GALLERY, type Gallery } from "./gallery";
+import type { Shortlet } from "@/lib/properties/types";
 import {
   BedIcon,
   CarIcon,
@@ -14,75 +14,7 @@ import {
   WifiIcon,
 } from "./icons";
 
-export type Shortlet = {
-  slug: string;
-  image: string;
-  bedrooms: string;
-  rate: string;
-  location: string;
-  title: string;
-  description: string;
-  longDescription: string;
-  gallery: Gallery;
-};
-
-const DEFAULT_LONG_DESCRIPTION =
-  "Elegant fully furnished shortlet apartment perfect for business trips, vacations, and weekend stays. Includes fast Wi-Fi, smart TV, kitchen, power supply, and security.";
-
-export const SHORTLETS: Shortlet[] = [
-  {
-    slug: "the-maple-shortlet",
-    image: "/shortlet-assets/img_7768-2-5.png",
-    bedrooms: "2 Bedrooms",
-    rate: "₦100,000/night",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "The Maple Shortlet",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "the-maple-shortlet-2",
-    image: "/shortlet-assets/img_7768-2-55.png",
-    bedrooms: "2 Bedrooms",
-    rate: "₦100,000/night",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "The Maple Shortlet",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "the-maple-shortlet-3",
-    image: "/shortlet-assets/img_7768-2-105.png",
-    bedrooms: "2 Bedrooms",
-    rate: "₦100,000/night",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "The Maple Shortlet",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "the-maple-shortlet-4",
-    image: "/shortlet-assets/img_7768-2-155.png",
-    bedrooms: "2 Bedrooms",
-    rate: "₦100,000/night",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "The Maple Shortlet",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    gallery: APT_DETAILS_GALLERY,
-  },
-];
-
-export function getShortletBySlug(slug: string): Shortlet | undefined {
-  return SHORTLETS.find((s) => s.slug === slug);
-}
+export type { Shortlet } from "@/lib/properties/types";
 
 export default function ShortletCard(s: Shortlet) {
   return (

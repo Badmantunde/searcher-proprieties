@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
-import {
-  SHORTLETS,
-  getShortletBySlug,
-} from "../../../components/properties-page/ShortletCard";
 import PropertyGallery from "../../../components/properties-page/PropertyGallery";
 import PropertyContactCard from "../../../components/properties-page/PropertyContactCard";
 import ShortletInfoCard from "../../../components/properties-page/shortlet/ShortletInfoCard";
+import {
+  getShortletBySlug,
+  getSlugsByType,
+} from "@/lib/properties/fetch";
 
 type RouteParams = { slug: string };
 
-export function generateStaticParams(): RouteParams[] {
-  return SHORTLETS.map((s) => ({ slug: s.slug }));
+export async function generateStaticParams(): Promise<RouteParams[]> {
+  return getSlugsByType("shortlet");
 }
 
 export async function generateMetadata({
@@ -22,7 +22,7 @@ export async function generateMetadata({
   params: Promise<RouteParams>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const property = getShortletBySlug(slug);
+  const property = await getShortletBySlug(slug);
   if (!property) return { title: "Property not found — Searcher Properties" };
   return {
     title: `${property.title} — Searcher Properties`,
@@ -36,7 +36,7 @@ export default async function ShortletDetailPage({
   params: Promise<RouteParams>;
 }) {
   const { slug } = await params;
-  const property = getShortletBySlug(slug);
+  const property = await getShortletBySlug(slug);
   if (!property) notFound();
 
   return (

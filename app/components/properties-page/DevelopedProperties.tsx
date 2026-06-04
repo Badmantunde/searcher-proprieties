@@ -1,8 +1,11 @@
+import { getDevelopedProperties } from "@/lib/properties/fetch";
 import Reveal from "../Reveal";
-import DevelopedCard, { DEVELOPED_PROPERTIES } from "./DevelopedCard";
+import DevelopedCard from "./DevelopedCard";
 import SectionHeader from "./SectionHeader";
 
-export default function DevelopedProperties() {
+export default async function DevelopedProperties() {
+  const properties = await getDevelopedProperties();
+
   return (
     <section
       id="developed"
@@ -16,9 +19,9 @@ export default function DevelopedProperties() {
         />
 
         <div className="mt-12 grid grid-cols-1 gap-7 md:grid-cols-2 lg:gap-8">
-          {DEVELOPED_PROPERTIES.map((p, i) => (
+          {properties.map((p, i) => (
             <Reveal
-              key={i}
+              key={p.slug}
               variant="fade-up"
               delay={i * 100}
               className="h-full"

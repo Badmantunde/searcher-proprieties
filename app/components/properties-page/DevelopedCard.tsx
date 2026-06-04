@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { mapsHref, whatsappHref } from "../../lib/links";
-import { APT_DETAILS_GALLERY, type Gallery } from "./gallery";
+import type { DevelopedProperty } from "@/lib/properties/types";
 import {
   CheckBadgeIcon,
   ChevronRight,
@@ -13,84 +13,7 @@ import {
   WhatsappIcon,
 } from "./icons";
 
-export type DevelopedProperty = {
-  slug: string;
-  image: string;
-  location: string;
-  title: string;
-  description: string;
-  longDescription: string;
-  priceRange: string;
-  amenities: string[];
-  gallery: Gallery;
-};
-
-const DEFAULT_LONG_DESCRIPTION =
-  "Luxury apartments built for comfort, style, and long-term value. Spacious interiors, modern finishing, secure environment, and excellent road access.";
-
-const DEFAULT_AMENITIES = [
-  "24/7 Security",
-  "Gym Security",
-  "Private Parking",
-  "Swimming Pool",
-  "Smart Home System",
-  "Garden & Landscaping",
-];
-
-export const DEVELOPED_PROPERTIES: DevelopedProperty[] = [
-  {
-    slug: "araromi-residences",
-    image: "/developed-assets/img_7768-2-18.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Residences",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    priceRange: "₦450M - ₦850M",
-    amenities: DEFAULT_AMENITIES,
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "araromi-residences-2",
-    image: "/developed-assets/img_7768-2-75.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Residences",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    priceRange: "₦450M - ₦850M",
-    amenities: DEFAULT_AMENITIES,
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "araromi-residences-3",
-    image: "/developed-assets/img_7767-1-132.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Residences",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    priceRange: "₦450M - ₦850M",
-    amenities: DEFAULT_AMENITIES,
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "araromi-residences-4",
-    image: "/developed-assets/img_7768-2-189.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Residences",
-    description:
-      "Luxury apartments built for comfort, style, and long-term value...",
-    longDescription: DEFAULT_LONG_DESCRIPTION,
-    priceRange: "₦450M - ₦850M",
-    amenities: DEFAULT_AMENITIES,
-    gallery: APT_DETAILS_GALLERY,
-  },
-];
-
-export function getDevelopedBySlug(slug: string): DevelopedProperty | undefined {
-  return DEVELOPED_PROPERTIES.find((p) => p.slug === slug);
-}
+export type { DevelopedProperty } from "@/lib/properties/types";
 
 export default function DevelopedCard(p: DevelopedProperty) {
   return (

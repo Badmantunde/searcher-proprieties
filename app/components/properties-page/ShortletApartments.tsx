@@ -1,8 +1,11 @@
+import { getShortlets } from "@/lib/properties/fetch";
 import Reveal from "../Reveal";
 import SectionHeader from "./SectionHeader";
-import ShortletCard, { SHORTLETS } from "./ShortletCard";
+import ShortletCard from "./ShortletCard";
 
-export default function ShortletApartments() {
+export default async function ShortletApartments() {
+  const shortlets = await getShortlets();
+
   return (
     <section
       id="shortlet"
@@ -16,9 +19,9 @@ export default function ShortletApartments() {
         />
 
         <div className="mt-12 grid grid-cols-1 gap-7 md:grid-cols-2 lg:gap-8">
-          {SHORTLETS.map((s, i) => (
+          {shortlets.map((s, i) => (
             <Reveal
-              key={i}
+              key={s.slug}
               variant="fade-up"
               delay={i * 100}
               className="h-full"

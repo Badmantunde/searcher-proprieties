@@ -1,5 +1,5 @@
 import { mapsHref } from "../../../lib/links";
-import type { DevelopingUnit } from "../DevelopingCard";
+import type { DevelopingUnit } from "@/lib/properties/types";
 import { LocationIcon } from "../icons";
 
 type Props = {

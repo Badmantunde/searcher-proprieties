@@ -1,8 +1,11 @@
+import { getDevelopingProjects } from "@/lib/properties/fetch";
 import Reveal from "../Reveal";
-import DevelopingCard, { DEVELOPING_PROJECTS } from "./DevelopingCard";
+import DevelopingCard from "./DevelopingCard";
 import SectionHeader from "./SectionHeader";
 
-export default function DevelopingProjects() {
+export default async function DevelopingProjects() {
+  const projects = await getDevelopingProjects();
+
   return (
     <section
       id="developing"
@@ -16,9 +19,9 @@ export default function DevelopingProjects() {
         />
 
         <div className="mt-12 grid grid-cols-1 gap-7 md:grid-cols-2 lg:gap-8">
-          {DEVELOPING_PROJECTS.map((p, i) => (
+          {projects.map((p, i) => (
             <Reveal
-              key={i}
+              key={p.slug}
               variant="fade-up"
               delay={i * 100}
               className="h-full"

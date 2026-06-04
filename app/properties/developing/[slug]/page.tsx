@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
-import {
-  DEVELOPING_PROJECTS,
-  getDevelopingBySlug,
-} from "../../../components/properties-page/DevelopingCard";
 import PropertyGallery from "../../../components/properties-page/PropertyGallery";
 import PropertyContactCard from "../../../components/properties-page/PropertyContactCard";
 import DevelopingInfoCard from "../../../components/properties-page/developing/DevelopingInfoCard";
+import {
+  getDevelopingBySlug,
+  getSlugsByType,
+} from "@/lib/properties/fetch";
 
 type RouteParams = { slug: string };
 
-export function generateStaticParams(): RouteParams[] {
-  return DEVELOPING_PROJECTS.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams(): Promise<RouteParams[]> {
+  return getSlugsByType("developing");
 }
 
 export async function generateMetadata({
@@ -22,7 +22,7 @@ export async function generateMetadata({
   params: Promise<RouteParams>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const project = getDevelopingBySlug(slug);
+  const project = await getDevelopingBySlug(slug);
   if (!project) return { title: "Project not found — Searcher Properties" };
   return {
     title: `${project.title} — Searcher Properties`,
@@ -36,7 +36,7 @@ export default async function DevelopingDetailPage({
   params: Promise<RouteParams>;
 }) {
   const { slug } = await params;
-  const project = getDevelopingBySlug(slug);
+  const project = await getDevelopingBySlug(slug);
   if (!project) notFound();
 
   return (

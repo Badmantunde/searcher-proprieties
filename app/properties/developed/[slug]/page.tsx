@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
-import {
-  DEVELOPED_PROPERTIES,
-  getDevelopedBySlug,
-} from "../../../components/properties-page/DevelopedCard";
 import PropertyGallery from "../../../components/properties-page/PropertyGallery";
 import PropertyContactCard from "../../../components/properties-page/PropertyContactCard";
 import DevelopedInfoCard from "../../../components/properties-page/developed/DevelopedInfoCard";
+import {
+  getDevelopedBySlug,
+  getSlugsByType,
+} from "@/lib/properties/fetch";
 
 type RouteParams = { slug: string };
 
-export function generateStaticParams(): RouteParams[] {
-  return DEVELOPED_PROPERTIES.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams(): Promise<RouteParams[]> {
+  return getSlugsByType("developed");
 }
 
 export async function generateMetadata({
@@ -22,7 +22,7 @@ export async function generateMetadata({
   params: Promise<RouteParams>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const property = getDevelopedBySlug(slug);
+  const property = await getDevelopedBySlug(slug);
   if (!property) return { title: "Property not found — Searcher Properties" };
   return {
     title: `${property.title} — Searcher Properties`,
@@ -36,7 +36,7 @@ export default async function DevelopedDetailPage({
   params: Promise<RouteParams>;
 }) {
   const { slug } = await params;
-  const property = getDevelopedBySlug(slug);
+  const property = await getDevelopedBySlug(slug);
   if (!property) notFound();
 
   return (

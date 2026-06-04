@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { mapsHref, whatsappHref } from "../../lib/links";
-import { APT_DETAILS_GALLERY, type Gallery } from "./gallery";
+import type { DevelopingProject } from "@/lib/properties/types";
 import {
   ChevronRight,
   FireIcon,
@@ -12,81 +12,7 @@ import {
   WhatsappIcon,
 } from "./icons";
 
-export type DevelopingUnit = {
-  type: string;
-  rental: string;
-  price: string;
-};
-
-export type DevelopingProject = {
-  slug: string;
-  image: string;
-  location: string;
-  leaseLabel: string;
-  title: string;
-  units: DevelopingUnit[];
-  progress: number;
-  completion: string;
-  gallery: Gallery;
-};
-
-const DEFAULT_UNITS: DevelopingUnit[] = [
-  { type: "Mini Flat", rental: "Annual Rental: ₦2.2M Yearly", price: "₦17M" },
-  { type: "Studio Room", rental: "Annual Rental: ₦2.2M Yearly", price: "₦9M" },
-];
-
-export const DEVELOPING_PROJECTS: DevelopingProject[] = [
-  {
-    slug: "shomolu-modern-living",
-    image: "/developing-assets/img_7769-1-32.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    leaseLabel: "25 Years Lease",
-    title: "Shomolu Modern Living Project",
-    units: DEFAULT_UNITS,
-    progress: 95,
-    completion: "July 2026",
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "maryland-project",
-    image: "/developing-assets/node-101.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    leaseLabel: "25 Years Lease",
-    title: "Maryland Project",
-    units: DEFAULT_UNITS,
-    progress: 95,
-    completion: "July 2026",
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "abule-egba-project",
-    image: "/developing-assets/img_7768-2-170.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    leaseLabel: "25 Years Lease",
-    title: "Abule Egba project",
-    units: DEFAULT_UNITS,
-    progress: 95,
-    completion: "July 2026",
-    gallery: APT_DETAILS_GALLERY,
-  },
-  {
-    slug: "yaba-garden-estate",
-    image: "/developing-assets/node-239.png",
-    location: "No. 15 Araromi Street, Shomolu",
-    leaseLabel: "25 Years Lease",
-    title: "Yaba Garden Estate",
-    units: DEFAULT_UNITS,
-    progress: 95,
-    completion: "July 2026",
-    gallery: APT_DETAILS_GALLERY,
-  },
-];
-
-export function getDevelopingBySlug(
-  slug: string,
-): DevelopingProject | undefined {
-  return DEVELOPING_PROJECTS.find((p) => p.slug === slug);
-}
+export type { DevelopingProject, DevelopingUnit } from "@/lib/properties/types";
 
 export default function DevelopingCard(p: DevelopingProject) {
   return (

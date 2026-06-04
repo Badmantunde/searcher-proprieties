@@ -1,53 +1,11 @@
 import Link from "next/link";
+import { getFeaturedProperties } from "@/lib/properties/fetch";
 import Reveal from "./Reveal";
-import FeaturedPropertyCard, {
-  type FeaturedProperty,
-} from "./properties-page/FeaturedPropertyCard";
+import FeaturedPropertyCard from "./properties-page/FeaturedPropertyCard";
 
-const PROPERTIES: FeaturedProperty[] = [
-  {
-    image: "/image/img_7768-2-39.png",
-    primaryBadge: "Developed",
-    secondaryBadge: "Completed",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Project",
-    description:
-      "Own a piece of luxury with us in our beautifully designed residence....",
-    detailHref: "/properties/developed/araromi-residences",
-  },
-  {
-    image: "/image/img_7769-1-76.png",
-    primaryBadge: "10 Years Lease",
-    secondaryBadge: "95% Complete",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Project",
-    description:
-      "Own a piece of luxury with us in our beautifully designed residence....",
-    detailHref: "/properties/developing/shomolu-modern-living",
-  },
-  {
-    image: "/image/img_7767-1-113.png",
-    primaryBadge: "Developed",
-    secondaryBadge: "Completed",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Project",
-    description:
-      "Own a piece of luxury with us in our beautifully designed residence....",
-    detailHref: "/properties/developed/araromi-residences-2",
-  },
-  {
-    image: "/image/img_7770-1-150.png",
-    primaryBadge: "10 Years Lease",
-    secondaryBadge: "95% Complete",
-    location: "No. 15 Araromi Street, Shomolu",
-    title: "Araromi Project",
-    description:
-      "Own a piece of luxury with us in our beautifully designed residence....",
-    detailHref: "/properties/developing/maryland-project",
-  },
-];
+export default async function FeaturedProperties() {
+  const properties = await getFeaturedProperties();
 
-export default function FeaturedProperties() {
   return (
     <section id="properties" className="bg-white p-6 sm:p-10 lg:p-20">
       <div className="mx-auto max-w-[1280px]">
@@ -61,9 +19,9 @@ export default function FeaturedProperties() {
         </Reveal>
 
         <div className="mt-12 grid grid-cols-1 gap-7 md:grid-cols-2">
-          {PROPERTIES.map((property, idx) => (
+          {properties.map((property, idx) => (
             <Reveal
-              key={idx}
+              key={property.detailHref}
               variant="fade-up"
               delay={idx * 120}
               className="h-full"

@@ -1,17 +1,19 @@
 import Reveal from "../../Reveal";
-import DevelopingCard, { DEVELOPING_PROJECTS } from "../DevelopingCard";
+import DevelopingCard from "../DevelopingCard";
+import type { DevelopingProject } from "@/lib/properties/types";
 
-export default function DevelopingGrid() {
+type Props = {
+  items: DevelopingProject[];
+};
+
+export default function DevelopingGrid({ items }: Props) {
   return (
-    <section
-      id="developing-projects"
-      className="bg-cream px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24"
-    >
+    <section className="px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24">
       <div className="mx-auto max-w-[1280px]">
         <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:gap-8">
-          {DEVELOPING_PROJECTS.map((p, i) => (
+          {items.map((p, i) => (
             <Reveal
-              key={i}
+              key={p.slug}
               variant="fade-up"
               delay={i * 100}
               className="h-full"

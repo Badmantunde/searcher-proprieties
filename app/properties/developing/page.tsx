@@ -3,6 +3,7 @@ import Nav from "../../components/Nav";
 import Footer from "../../components/Footer";
 import DevelopingHero from "../../components/properties-page/developing/DevelopingHero";
 import DevelopingGrid from "../../components/properties-page/developing/DevelopingGrid";
+import { getDevelopingProjects } from "@/lib/properties/fetch";
 
 export const metadata: Metadata = {
   title: "Developing Properties — Searcher Properties",
@@ -10,12 +11,14 @@ export const metadata: Metadata = {
     "Future developments and investment opportunities from Searcher Properties — secure your future with exclusive early-stage property investments offering exceptional ROI potential.",
 };
 
-export default function DevelopingPropertiesPage() {
+export default async function DevelopingPropertiesPage() {
+  const items = await getDevelopingProjects();
+
   return (
     <main className="flex min-h-screen flex-col bg-white">
       <Nav />
       <DevelopingHero />
-      <DevelopingGrid />
+      <DevelopingGrid items={items} />
       <Footer />
     </main>
   );
