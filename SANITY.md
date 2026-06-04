@@ -46,12 +46,15 @@ Requires `SANITY_API_WRITE_TOKEN` in `.env.local`. After seeding, **Publish** ea
 
 ## 5. Adding a new property in Studio
 
-1. Open **Property** → **Create new**.
-2. Choose **Property type** (Shortlet / Developed / Developing).
-3. Fill required fields (type-specific fields appear based on type).
-4. Upload **Card thumbnail** and **Detail gallery** (hero + extra images).
-5. Toggle **Show on homepage featured section** if it should appear on the home page.
-6. Click **Publish**.
+Open **`/studio/content`** (or click **Content** in the Studio sidebar).
+
+1. Choose a list: **All properties**, **Shortlet apartments**, **Developed properties**, or **Developing projects**.
+2. Click **Create** → **Property**.
+3. Choose **Property type** (Shortlet / Developed / Developing).
+4. Fill required fields (type-specific fields appear based on type).
+5. Upload **Card thumbnail** and **Detail gallery** (hero + extra images).
+6. Toggle **Show on homepage featured section** if it should appear on the home page.
+7. Click **Publish**.
 
 ### Field guide
 
@@ -75,3 +78,41 @@ Requires `SANITY_API_WRITE_TOKEN` in `.env.local`. After seeding, **Publish** ea
    - Trigger: Create, Update, Delete
 
 Without a webhook, new content appears within ~60 seconds (ISR revalidate) or after redeploy.
+
+## 8. Sanity Dashboard + “Content” tool (registered studios)
+
+If your project is registered on [sanity.io/manage](https://www.sanity.io/manage) but the Dashboard only shows **Presentation** and **Applications** (and not **Content** for editing Properties), the studio manifest is not being served correctly.
+
+This project is configured for an embedded studio at **`/studio`** with the **Content** tool (`structureTool`) listing all Property documents.
+
+### One-time setup
+
+1. Set env vars in `.env.local` (especially `NEXT_PUBLIC_SANITY_PROJECT_ID`).
+2. Generate the manifest (also runs automatically before `npm run build`):
+
+   ```bash
+   npm run manifest
+   ```
+
+   Files are written to `public/studio/static/` and served at  
+   `https://your-domain.com/studio/static/create-manifest.json`.
+
+3. Deploy the schema to Sanity (requires login or `SANITY_AUTH_TOKEN`):
+
+   ```bash
+   npm run schema:deploy
+   ```
+
+4. In **Sanity Manage → Studios**, set the canonical studio URL to  
+   `https://your-domain.com/studio` (include the `/studio` path).
+
+5. Redeploy the Next.js site so the manifest and bridge script are live.
+
+The studio layout includes Sanity’s dashboard **bridge script**, which lets the Dashboard discover the **Content** tool and your Property schema.
+
+### Local check
+
+After `npm run manifest`, open:
+
+- `http://localhost:3000/studio/static/create-manifest.json`
+- `http://localhost:3000/studio/content` — edit Properties here

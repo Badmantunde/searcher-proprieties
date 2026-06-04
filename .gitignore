@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated Sanity manifest (rebuilt via npm run manifest / prebuild)
+/public/studio/static/

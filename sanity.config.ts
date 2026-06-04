@@ -3,6 +3,7 @@ import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { apiVersion, dataset, projectId } from "./sanity/env";
 import { schemaTypes } from "./sanity/schemaTypes";
+import { structure } from "./sanity/structure";
 
 export default defineConfig({
   name: "searcher-properties",
@@ -10,7 +11,14 @@ export default defineConfig({
   projectId,
   dataset,
   basePath: "/studio",
-  plugins: [structureTool(), visionTool({ defaultApiVersion: apiVersion })],
+  plugins: [
+    structureTool({
+      name: "content",
+      title: "Content",
+      structure,
+    }),
+    visionTool({ defaultApiVersion: apiVersion }),
+  ],
   schema: {
     types: schemaTypes,
   },

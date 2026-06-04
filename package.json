@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm run manifest",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "studio": "sanity dev",
-    "seed": "tsx scripts/seed-sanity.ts"
+    "seed": "tsx scripts/seed-sanity.ts",
+    "manifest": "sanity manifest extract --path public/studio/static",
+    "schema:deploy": "sanity schemas deploy --manifest-dir public/studio/static"
   },
   "dependencies": {
     "@sanity/image-url": "^2.1.1",
