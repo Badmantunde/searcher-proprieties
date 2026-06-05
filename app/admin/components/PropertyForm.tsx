@@ -53,8 +53,17 @@ export default function PropertyForm({ mode, property }: Props) {
 
   const [cardFile, setCardFile] = useState<File | null>(null);
   const [cardPreview, setCardPreview] = useState<string | null>(null);
+  const [savedCardUrl, setSavedCardUrl] = useState<string | null>(
+    property?.card_image_url ?? null,
+  );
   const [heroFile, setHeroFile] = useState<File | null>(null);
   const [heroPreview, setHeroPreview] = useState<string | null>(null);
+  const [savedHeroUrl, setSavedHeroUrl] = useState<string | null>(
+    property?.gallery_hero_url ?? null,
+  );
+  const [savedThumbs, setSavedThumbs] = useState<string[]>(
+    property?.gallery_thumbnail_urls ?? [],
+  );
   const [pendingThumbs, setPendingThumbs] = useState<PendingThumb[]>([]);
   const [clientError, setClientError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -74,6 +83,9 @@ export default function PropertyForm({ mode, property }: Props) {
     if (property) {
       setTitle(property.title);
       setSlug(property.slug);
+      setSavedCardUrl(property.card_image_url || null);
+      setSavedHeroUrl(property.gallery_hero_url || null);
+      setSavedThumbs(property.gallery_thumbnail_urls ?? []);
     }
   }, [property]);
 
@@ -145,6 +157,20 @@ export default function PropertyForm({ mode, property }: Props) {
     });
   }
 
+  function removeSavedCard() {
+    setSavedCardUrl(null);
+    clearFileSelection(setCardFile, setCardPreview, cardPreview);
+  }
+
+  function removeSavedHero() {
+    setSavedHeroUrl(null);
+    clearFileSelection(setHeroFile, setHeroPreview, heroPreview);
+  }
+
+  function removeSavedThumb(url: string) {
+    setSavedThumbs((prev) => prev.filter((item) => item !== url));
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -164,6 +190,15 @@ export default function PropertyForm({ mode, property }: Props) {
         setClientError("Gallery hero image is required.");
         return;
       }
+    } else {
+      if (!cardFile && !savedCardUrl) {
+        setClientError("Card thumbnail is required.");
+        return;
+      }
+      if (!heroFile && !savedHeroUrl) {
+        setClientError("Gallery hero image is required.");
+        return;
+      }
     }
 
     const folder = slug || slugify(title) || "property";
@@ -180,7 +215,7 @@ export default function PropertyForm({ mode, property }: Props) {
     setUploading(true);
 
     try {
-      let card_image_url = property?.card_image_url ?? "";
+      let card_image_url = savedCardUrl ?? "";
       if (cardFile) {
         const uploaded = await uploadPropertyImage(supabase, cardFile, folder);
         if (uploaded.error || !uploaded.url) {
@@ -194,7 +229,7 @@ export default function PropertyForm({ mode, property }: Props) {
         card_image_url = uploaded.url;
       }
 
-      let gallery_hero_url = property?.gallery_hero_url ?? "";
+      let gallery_hero_url = savedHeroUrl ?? "";
       if (heroFile) {
         const uploaded = await uploadPropertyImage(supabase, heroFile, folder);
         if (uploaded.error || !uploaded.url) {
@@ -208,7 +243,7 @@ export default function PropertyForm({ mode, property }: Props) {
         gallery_hero_url = uploaded.url;
       }
 
-      const gallery_thumbnail_urls = [...(property?.gallery_thumbnail_urls ?? [])];
+      const gallery_thumbnail_urls = [...savedThumbs];
       for (const thumb of pendingThumbs) {
         const uploaded = await uploadPropertyImage(supabase, thumb.file, folder);
         if (uploaded.error || !uploaded.url) {
@@ -240,8 +275,8 @@ export default function PropertyForm({ mode, property }: Props) {
     }
   }
 
-  const cardDisplay = cardPreview ?? property?.card_image_url ?? null;
-  const heroDisplay = heroPreview ?? property?.gallery_hero_url ?? null;
+  const cardDisplay = cardPreview ?? savedCardUrl ?? null;
+  const heroDisplay = heroPreview ?? savedHeroUrl ?? null;
 
   return (
     <form
@@ -328,10 +363,10 @@ export default function PropertyForm({ mode, property }: Props) {
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <ImageUploadField
             label="Card thumbnail"
-            required={mode === "create" && !property?.card_image_url}
+            required={!cardDisplay}
             hint={
-              property?.card_image_url && !cardFile
-                ? "Select a new image to replace the current one."
+              savedCardUrl && !cardFile
+                ? "Remove the current image or select a new one to replace it."
                 : undefined
             }
             preview={cardDisplay}
@@ -342,13 +377,16 @@ export default function PropertyForm({ mode, property }: Props) {
             onClear={() =>
               clearFileSelection(setCardFile, setCardPreview, cardPreview)
             }
+            onRemoveSaved={
+              mode === "edit" && savedCardUrl && !cardFile ? removeSavedCard : undefined
+            }
           />
           <ImageUploadField
             label="Gallery hero"
-            required={mode === "create" && !property?.gallery_hero_url}
+            required={!heroDisplay}
             hint={
-              property?.gallery_hero_url && !heroFile
-                ? "Select a new image to replace the current one."
+              savedHeroUrl && !heroFile
+                ? "Remove the current image or select a new one to replace it."
                 : undefined
             }
             preview={heroDisplay}
@@ -359,13 +397,17 @@ export default function PropertyForm({ mode, property }: Props) {
             onClear={() =>
               clearFileSelection(setHeroFile, setHeroPreview, heroPreview)
             }
+            onRemoveSaved={
+              mode === "edit" && savedHeroUrl && !heroFile ? removeSavedHero : undefined
+            }
           />
           <div className="sm:col-span-2">
             <GalleryThumbnailsField
-              existing={property?.gallery_thumbnail_urls ?? []}
+              existing={savedThumbs}
               pending={pendingThumbs}
               onSelect={handleGallerySelect}
               onRemovePending={removePendingThumb}
+              onRemoveExisting={mode === "edit" ? removeSavedThumb : undefined}
             />
           </div>
         </div>
@@ -551,6 +593,7 @@ function ImageUploadField({
   required,
   onSelect,
   onClear,
+  onRemoveSaved,
 }: {
   label: string;
   hint?: string;
@@ -559,6 +602,7 @@ function ImageUploadField({
   required?: boolean;
   onSelect: (file: File | undefined) => void;
   onClear: () => void;
+  onRemoveSaved?: () => void;
 }) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -584,8 +628,12 @@ function ImageUploadField({
       />
       {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
       {preview ? (
-        hasNewSelection ? (
-          <ImagePreview src={preview} alt={label} onClear={handleClear} />
+        hasNewSelection || onRemoveSaved ? (
+          <ImagePreview
+            src={preview}
+            alt={label}
+            onClear={hasNewSelection ? handleClear : onRemoveSaved!}
+          />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -604,11 +652,13 @@ function GalleryThumbnailsField({
   pending,
   onSelect,
   onRemovePending,
+  onRemoveExisting,
 }: {
   existing: string[];
   pending: PendingThumb[];
   onSelect: (files: FileList | null) => void;
   onRemovePending: (id: string) => void;
+  onRemoveExisting?: (url: string) => void;
 }) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -635,9 +685,20 @@ function GalleryThumbnailsField({
           <div key={url} className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt="" className="h-24 w-32 rounded-lg border border-slate-200 object-cover" />
-            <span className="absolute -right-1 -top-1 rounded-full bg-slate-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
-              saved
-            </span>
+            {onRemoveExisting ? (
+              <button
+                type="button"
+                onClick={() => onRemoveExisting(url)}
+                aria-label="Remove saved image"
+                className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white shadow-md hover:bg-red-600"
+              >
+                ×
+              </button>
+            ) : (
+              <span className="absolute -right-1 -top-1 rounded-full bg-slate-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                saved
+              </span>
+            )}
           </div>
         ))}
         {pending.map((thumb) => (
