@@ -7,7 +7,6 @@ import InvestmentProcess from "./components/InvestmentProcess";
 import LocationMap from "./components/LocationMap";
 import Nav from "./components/Nav";
 import Stats from "./components/Stats";
-import Testimonials from "./components/Testimonials";
 import TrustedProperties from "./components/TrustedProperties";
 import VideoShowcase from "./components/VideoShowcase";
 
@@ -22,7 +21,6 @@ export default function Home() {
       <About />
       <InvestmentProcess />
       <VideoShowcase />
-      <Testimonials />
       <Contact />
       <LocationMap />
       <Footer />

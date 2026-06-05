@@ -1,23 +1,11 @@
 import type { Gallery } from "@/app/components/properties-page/gallery";
 
-export type PropertyType = "shortlet" | "developed" | "developing";
+export type PropertyType = "developed" | "developing";
 
 export type DevelopingUnit = {
   type: string;
   rental: string;
   price: string;
-};
-
-export type Shortlet = {
-  slug: string;
-  image: string;
-  bedrooms: string;
-  rate: string;
-  location: string;
-  title: string;
-  description: string;
-  longDescription: string;
-  gallery: Gallery;
 };
 
 export type DevelopedProperty = {
@@ -56,28 +44,49 @@ export type FeaturedProperty = {
   detailHref: string;
 };
 
-export type SanityPropertyDoc = {
-  _id: string;
-  propertyType: PropertyType;
+export type PropertyRow = {
+  id: string;
   slug: string;
+  property_type: PropertyType;
   title: string;
-  description: string;
-  longDescription: string;
   location: string;
-  cardImage?: { asset?: { _ref?: string } } | null;
-  gallery?: {
-    hero?: { asset?: { _ref?: string } } | null;
-    images?: Array<{ asset?: { _ref?: string } } | null> | null;
-  } | null;
-  bedrooms?: string;
-  rate?: string;
-  priceRange?: string;
+  description: string;
+  long_description: string;
+  card_image_url: string;
+  gallery_hero_url: string;
+  gallery_thumbnail_urls: string[];
+  price_range: string | null;
+  amenities: string[];
+  lease_label: string | null;
+  progress: number | null;
+  completion: string | null;
+  units: DevelopingUnit[];
+  featured: boolean;
+  featured_primary_badge: string | null;
+  featured_secondary_badge: string | null;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type PropertyFormInput = {
+  slug: string;
+  property_type: PropertyType;
+  title: string;
+  location: string;
+  description: string;
+  long_description: string;
+  card_image_url: string;
+  gallery_hero_url: string;
+  gallery_thumbnail_urls: string[];
+  price_range?: string;
   amenities?: string[];
-  leaseLabel?: string;
+  lease_label?: string;
   progress?: number;
   completion?: string;
   units?: DevelopingUnit[];
   featured?: boolean;
-  featuredPrimaryBadge?: string;
-  featuredSecondaryBadge?: string;
+  featured_primary_badge?: string;
+  featured_secondary_badge?: string;
+  published?: boolean;
 };

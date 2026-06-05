@@ -4,35 +4,28 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npm run manifest",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "studio": "sanity dev",
-    "seed": "tsx scripts/seed-sanity.ts",
-    "manifest": "sanity manifest extract --path public/studio/static",
-    "schema:deploy": "sanity schemas deploy --manifest-dir public/studio/static"
+    "seed": "tsx scripts/seed-supabase.ts"
   },
   "dependencies": {
-    "@sanity/image-url": "^2.1.1",
-    "@sanity/vision": "^5.30.0",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.107.0",
     "next": "16.2.6",
-    "next-sanity": "^13.0.11",
     "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "sanity": "^5.30.0"
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@sanity/client": "^7.16.2",
-    "dotenv": "^17.2.3",
-    "tsx": "^4.20.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

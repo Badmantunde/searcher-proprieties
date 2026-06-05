@@ -20,7 +20,6 @@ const NAV: NavItem[] = [
     children: [
       { label: "Developing Properties", href: "/properties/developing" },
       { label: "Developed Properties", href: "/properties/developed" },
-      { label: "Shortlet Apartments", href: "/properties/shortlet" },
     ],
   },
   { label: "About", href: "/about" },

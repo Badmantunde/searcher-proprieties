@@ -1,123 +1,127 @@
-import { sanityImageUrl } from "@/sanity/lib/image";
-import type { Gallery } from "@/app/components/properties-page/gallery";
 import { APT_DETAILS_GALLERY } from "@/app/components/properties-page/gallery";
 import type {
   DevelopedProperty,
   DevelopingProject,
+  DevelopingUnit,
   FeaturedProperty,
-  SanityPropertyDoc,
-  Shortlet,
+  PropertyRow,
 } from "./types";
 
-function mapGallery(
-  gallery: SanityPropertyDoc["gallery"],
-): Gallery | undefined {
-  if (!gallery?.hero) return undefined;
-  const hero = sanityImageUrl(gallery.hero, 2400);
-  if (!hero) return undefined;
-  const thumbnails =
-    gallery.images
-      ?.map((img) => sanityImageUrl(img, 1200))
-      .filter((url): url is string => Boolean(url)) ?? [];
-  return { hero, thumbnails };
+function parseUnits(raw: unknown): DevelopingUnit[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (u): u is DevelopingUnit =>
+      typeof u === "object" &&
+      u !== null &&
+      "type" in u &&
+      "price" in u &&
+      typeof (u as DevelopingUnit).type === "string",
+  );
 }
 
-function mapCardImage(doc: SanityPropertyDoc): string | undefined {
-  return sanityImageUrl(doc.cardImage, 1200);
+function parseStringArray(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((v): v is string => typeof v === "string");
 }
 
-function detailPath(type: SanityPropertyDoc["propertyType"], slug: string) {
-  return `/properties/${type}/${slug}`;
-}
-
-export function mapToShortlet(doc: SanityPropertyDoc): Shortlet | null {
-  if (doc.propertyType !== "shortlet") return null;
-  const image = mapCardImage(doc);
-  const gallery = mapGallery(doc.gallery);
-  if (!image || !gallery || !doc.bedrooms || !doc.rate) return null;
+function galleryFromRow(row: PropertyRow) {
   return {
-    slug: doc.slug,
-    image,
-    bedrooms: doc.bedrooms,
-    rate: doc.rate,
-    location: doc.location,
-    title: doc.title,
-    description: doc.description,
-    longDescription: doc.longDescription,
-    gallery,
+    hero: row.gallery_hero_url,
+    thumbnails: row.gallery_thumbnail_urls ?? [],
   };
 }
 
-export function mapToDeveloped(doc: SanityPropertyDoc): DevelopedProperty | null {
-  if (doc.propertyType !== "developed") return null;
-  const image = mapCardImage(doc);
-  const gallery = mapGallery(doc.gallery);
-  if (!image || !gallery || !doc.priceRange) return null;
+export function normalizePropertyRow(row: Record<string, unknown>): PropertyRow {
   return {
-    slug: doc.slug,
-    image,
-    location: doc.location,
-    title: doc.title,
-    description: doc.description,
-    longDescription: doc.longDescription,
-    priceRange: doc.priceRange,
-    amenities: doc.amenities ?? [],
-    gallery,
+    id: String(row.id),
+    slug: String(row.slug),
+    property_type: row.property_type as PropertyRow["property_type"],
+    title: String(row.title),
+    location: String(row.location),
+    description: String(row.description),
+    long_description: String(row.long_description),
+    card_image_url: String(row.card_image_url),
+    gallery_hero_url: String(row.gallery_hero_url),
+    gallery_thumbnail_urls: parseStringArray(row.gallery_thumbnail_urls),
+    price_range: row.price_range ? String(row.price_range) : null,
+    amenities: parseStringArray(row.amenities),
+    lease_label: row.lease_label ? String(row.lease_label) : null,
+    progress: typeof row.progress === "number" ? row.progress : null,
+    completion: row.completion ? String(row.completion) : null,
+    units: parseUnits(row.units),
+    featured: Boolean(row.featured),
+    featured_primary_badge: row.featured_primary_badge
+      ? String(row.featured_primary_badge)
+      : null,
+    featured_secondary_badge: row.featured_secondary_badge
+      ? String(row.featured_secondary_badge)
+      : null,
+    published: Boolean(row.published),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
   };
 }
 
-export function mapToDeveloping(doc: SanityPropertyDoc): DevelopingProject | null {
-  if (doc.propertyType !== "developing") return null;
-  const image = mapCardImage(doc);
-  const gallery = mapGallery(doc.gallery);
-  if (!image || !gallery) return null;
+export function rowToDeveloped(row: PropertyRow): DevelopedProperty | null {
+  if (row.property_type !== "developed") return null;
   return {
-    slug: doc.slug,
-    image,
-    location: doc.location,
-    leaseLabel: doc.leaseLabel ?? "25 Years Lease",
-    title: doc.title,
-    description: doc.description,
-    longDescription: doc.longDescription,
-    units: doc.units ?? [],
-    progress: doc.progress ?? 0,
-    completion: doc.completion ?? "TBA",
-    gallery,
+    slug: row.slug,
+    image: row.card_image_url,
+    location: row.location,
+    title: row.title,
+    description: row.description,
+    longDescription: row.long_description,
+    priceRange: row.price_range ?? "",
+    amenities: row.amenities,
+    gallery: galleryFromRow(row),
   };
 }
 
-export function mapToFeatured(doc: SanityPropertyDoc): FeaturedProperty | null {
-  if (!doc.featured) return null;
-  const image = mapCardImage(doc);
-  if (!image) return null;
+export function rowToDeveloping(row: PropertyRow): DevelopingProject | null {
+  if (row.property_type !== "developing") return null;
+  return {
+    slug: row.slug,
+    image: row.card_image_url,
+    location: row.location,
+    leaseLabel: row.lease_label ?? "25 Years Lease",
+    title: row.title,
+    description: row.description,
+    longDescription: row.long_description,
+    units: row.units,
+    progress: row.progress ?? 0,
+    completion: row.completion ?? "TBA",
+    gallery: galleryFromRow(row),
+  };
+}
+
+export function rowToFeatured(row: PropertyRow): FeaturedProperty | null {
+  if (!row.featured) return null;
 
   const defaultBadges: Record<
-    SanityPropertyDoc["propertyType"],
+    PropertyRow["property_type"],
     { primary: string; secondary: string }
   > = {
-    shortlet: { primary: "Shortlet", secondary: "Available" },
     developed: { primary: "Developed", secondary: "Completed" },
     developing: {
-      primary: doc.leaseLabel ?? "Developing",
-      secondary: doc.progress ? `${doc.progress}% Complete` : "In progress",
+      primary: row.lease_label ?? "Developing",
+      secondary: row.progress ? `${row.progress}% Complete` : "In progress",
     },
   };
 
-  const badges = defaultBadges[doc.propertyType];
+  const badges = defaultBadges[row.property_type];
 
   return {
-    image,
-    primaryBadge: doc.featuredPrimaryBadge ?? badges.primary,
-    secondaryBadge: doc.featuredSecondaryBadge ?? badges.secondary,
-    location: doc.location,
-    title: doc.title,
-    description: doc.description,
-    detailHref: detailPath(doc.propertyType, doc.slug),
+    image: row.card_image_url,
+    primaryBadge: row.featured_primary_badge ?? badges.primary,
+    secondaryBadge: row.featured_secondary_badge ?? badges.secondary,
+    location: row.location,
+    title: row.title,
+    description: row.description,
+    detailHref: `/properties/${row.property_type}/${row.slug}`,
   };
 }
 
-/** Fallback gallery when Sanity images are missing during migration */
-export function withGalleryFallback<T extends { gallery: Gallery }>(
+export function withGalleryFallback<T extends { gallery: { hero: string; thumbnails: string[] } }>(
   item: T,
 ): T {
   if (item.gallery.hero) return item;

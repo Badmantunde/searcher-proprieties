@@ -4,12 +4,10 @@ import Footer from "../components/Footer";
 import PropertiesHero from "../components/properties-page/PropertiesHero";
 import DevelopedProperties from "../components/properties-page/DevelopedProperties";
 import DevelopingProjects from "../components/properties-page/DevelopingProjects";
-import ShortletApartments from "../components/properties-page/ShortletApartments";
-
 export const metadata: Metadata = {
   title: "Properties — Searcher Properties",
   description:
-    "Explore Searcher Properties' complete collection of luxury completed homes, developing investment projects, and fully furnished shortlet apartments.",
+    "Explore Searcher Properties' complete collection of luxury completed homes and developing investment projects.",
 };
 
 export default function PropertiesPage() {
@@ -19,7 +17,6 @@ export default function PropertiesPage() {
       <PropertiesHero />
       <DevelopedProperties />
       <DevelopingProjects />
-      <ShortletApartments />
       <Footer />
     </main>
   );

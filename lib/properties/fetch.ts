@@ -1,124 +1,88 @@
-import { getSanityClient } from "@/sanity/lib/client";
+import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
-  allPropertySlugsQuery,
-  featuredPropertiesQuery,
-  propertiesByTypeQuery,
-  propertyBySlugQuery,
-} from "@/sanity/lib/queries";
-import { isSanityConfigured } from "@/sanity/env";
-import {
-  mapToDeveloped,
-  mapToDeveloping,
-  mapToFeatured,
-  mapToShortlet,
+  normalizePropertyRow,
+  rowToDeveloped,
+  rowToDeveloping,
+  rowToFeatured,
   withGalleryFallback,
 } from "./map";
 import {
   STATIC_DEVELOPED,
   STATIC_DEVELOPING,
   STATIC_FEATURED,
-  STATIC_SHORTLETS,
 } from "./static";
 import type {
   DevelopedProperty,
   DevelopingProject,
   FeaturedProperty,
+  PropertyRow,
   PropertyType,
-  SanityPropertyDoc,
-  Shortlet,
 } from "./types";
 
-export const SANITY_REVALIDATE_SECONDS = 60;
+export const REVALIDATE_SECONDS = 60;
 
-async function fetchByType(type: PropertyType): Promise<SanityPropertyDoc[]> {
-  if (!isSanityConfigured()) return [];
-  try {
-    return await getSanityClient().fetch<SanityPropertyDoc[]>(
-      propertiesByTypeQuery,
-      { type },
-      { next: { revalidate: SANITY_REVALIDATE_SECONDS } },
-    );
-  } catch {
-    return [];
-  }
-}
+async function fetchPublishedByType(
+  type: PropertyType,
+): Promise<PropertyRow[]> {
+  if (!isSupabaseConfigured()) return [];
 
-export async function getShortlets(): Promise<Shortlet[]> {
-  const docs = await fetchByType("shortlet");
-  const mapped = docs
-    .map(mapToShortlet)
-    .filter((item): item is Shortlet => item !== null)
-    .map(withGalleryFallback);
-  return mapped.length > 0 ? mapped : STATIC_SHORTLETS;
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("property_type", type)
+    .eq("published", true)
+    .order("title", { ascending: true });
+
+  if (error || !data) return [];
+  return data.map((row) => normalizePropertyRow(row));
 }
 
 export async function getDevelopedProperties(): Promise<DevelopedProperty[]> {
-  const docs = await fetchByType("developed");
-  const mapped = docs
-    .map(mapToDeveloped)
+  const rows = await fetchPublishedByType("developed");
+  const mapped = rows
+    .map(rowToDeveloped)
     .filter((item): item is DevelopedProperty => item !== null)
     .map(withGalleryFallback);
   return mapped.length > 0 ? mapped : STATIC_DEVELOPED;
 }
 
 export async function getDevelopingProjects(): Promise<DevelopingProject[]> {
-  const docs = await fetchByType("developing");
-  const mapped = docs
-    .map(mapToDeveloping)
+  const rows = await fetchPublishedByType("developing");
+  const mapped = rows
+    .map(rowToDeveloping)
     .filter((item): item is DevelopingProject => item !== null)
     .map(withGalleryFallback);
   return mapped.length > 0 ? mapped : STATIC_DEVELOPING;
 }
 
 export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
-  if (!isSanityConfigured()) return STATIC_FEATURED;
-  try {
-    const docs = await getSanityClient().fetch<SanityPropertyDoc[]>(
-      featuredPropertiesQuery,
-      {},
-      { next: { revalidate: SANITY_REVALIDATE_SECONDS } },
-    );
-    const mapped = docs
-      .map(mapToFeatured)
-      .filter((item): item is FeaturedProperty => item !== null);
-    return mapped.length > 0 ? mapped : STATIC_FEATURED;
-  } catch {
-    return STATIC_FEATURED;
-  }
-}
+  if (!isSupabaseConfigured()) return STATIC_FEATURED;
 
-export async function getPropertyBySlug(
-  slug: string,
-): Promise<SanityPropertyDoc | null> {
-  if (!isSanityConfigured()) return null;
-  try {
-    return await getSanityClient().fetch<SanityPropertyDoc | null>(
-      propertyBySlugQuery,
-      { slug },
-      { next: { revalidate: SANITY_REVALIDATE_SECONDS } },
-    );
-  } catch {
-    return null;
-  }
-}
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("published", true)
+    .eq("featured", true)
+    .order("updated_at", { ascending: false });
 
-export async function getShortletBySlug(
-  slug: string,
-): Promise<Shortlet | undefined> {
-  const doc = await getPropertyBySlug(slug);
-  if (doc) {
-    const mapped = mapToShortlet(doc);
-    if (mapped) return withGalleryFallback(mapped);
-  }
-  return STATIC_SHORTLETS.find((s) => s.slug === slug);
+  if (error || !data?.length) return STATIC_FEATURED;
+
+  const mapped = data
+    .map((row) => rowToFeatured(normalizePropertyRow(row)))
+    .filter((item): item is FeaturedProperty => item !== null);
+
+  return mapped.length > 0 ? mapped : STATIC_FEATURED;
 }
 
 export async function getDevelopedBySlug(
   slug: string,
 ): Promise<DevelopedProperty | undefined> {
-  const doc = await getPropertyBySlug(slug);
-  if (doc) {
-    const mapped = mapToDeveloped(doc);
+  const row = await getPropertyRowBySlug(slug, "developed");
+  if (row) {
+    const mapped = rowToDeveloped(row);
     if (mapped) return withGalleryFallback(mapped);
   }
   return STATIC_DEVELOPED.find((p) => p.slug === slug);
@@ -127,41 +91,77 @@ export async function getDevelopedBySlug(
 export async function getDevelopingBySlug(
   slug: string,
 ): Promise<DevelopingProject | undefined> {
-  const doc = await getPropertyBySlug(slug);
-  if (doc) {
-    const mapped = mapToDeveloping(doc);
+  const row = await getPropertyRowBySlug(slug, "developing");
+  if (row) {
+    const mapped = rowToDeveloping(row);
     if (mapped) return withGalleryFallback(mapped);
   }
   return STATIC_DEVELOPING.find((p) => p.slug === slug);
 }
 
+async function getPropertyRowBySlug(
+  slug: string,
+  type: PropertyType,
+): Promise<PropertyRow | null> {
+  if (!isSupabaseConfigured()) return null;
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("slug", slug)
+    .eq("property_type", type)
+    .eq("published", true)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return normalizePropertyRow(data);
+}
+
 export async function getSlugsByType(
   type: PropertyType,
 ): Promise<{ slug: string }[]> {
-  if (!isSanityConfigured()) {
-    const list =
-      type === "shortlet"
-        ? STATIC_SHORTLETS
-        : type === "developed"
-          ? STATIC_DEVELOPED
-          : STATIC_DEVELOPING;
-    return list.map((p) => ({ slug: p.slug }));
+  const fallback = type === "developed" ? STATIC_DEVELOPED : STATIC_DEVELOPING;
+
+  if (!isSupabaseConfigured()) {
+    return fallback.map((p) => ({ slug: p.slug }));
   }
-  try {
-    const slugs = await getSanityClient().fetch<{ slug: string }[]>(
-      allPropertySlugsQuery,
-      { type },
-      { next: { revalidate: SANITY_REVALIDATE_SECONDS } },
-    );
-    if (slugs.length > 0) return slugs;
-  } catch {
-    /* fallback below */
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("slug")
+    .eq("property_type", type)
+    .eq("published", true);
+
+  if (error || !data?.length) {
+    return fallback.map((p) => ({ slug: p.slug }));
   }
-  const list =
-    type === "shortlet"
-      ? STATIC_SHORTLETS
-      : type === "developed"
-        ? STATIC_DEVELOPED
-        : STATIC_DEVELOPING;
-  return list.map((p) => ({ slug: p.slug }));
+
+  return data.map((row) => ({ slug: row.slug as string }));
+}
+
+export async function getAllPropertiesAdmin(): Promise<PropertyRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map((row) => normalizePropertyRow(row));
+}
+
+export async function getPropertyByIdAdmin(
+  id: string,
+): Promise<PropertyRow | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("properties")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return normalizePropertyRow(data);
 }
