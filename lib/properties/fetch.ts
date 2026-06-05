@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getPublicClientOrNull } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
   normalizePropertyRow,
@@ -27,7 +28,9 @@ async function fetchPublishedByType(
 ): Promise<PropertyRow[]> {
   if (!isSupabaseConfigured()) return [];
 
-  const supabase = await createClient();
+  const supabase = getPublicClientOrNull();
+  if (!supabase) return [];
+
   const { data, error } = await supabase
     .from("properties")
     .select("*")
@@ -60,7 +63,9 @@ export async function getDevelopingProjects(): Promise<DevelopingProject[]> {
 export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
   if (!isSupabaseConfigured()) return STATIC_FEATURED;
 
-  const supabase = await createClient();
+  const supabase = getPublicClientOrNull();
+  if (!supabase) return STATIC_FEATURED;
+
   const { data, error } = await supabase
     .from("properties")
     .select("*")
@@ -105,7 +110,9 @@ async function getPropertyRowBySlug(
 ): Promise<PropertyRow | null> {
   if (!isSupabaseConfigured()) return null;
 
-  const supabase = await createClient();
+  const supabase = getPublicClientOrNull();
+  if (!supabase) return null;
+
   const { data, error } = await supabase
     .from("properties")
     .select("*")
@@ -127,7 +134,11 @@ export async function getSlugsByType(
     return fallback.map((p) => ({ slug: p.slug }));
   }
 
-  const supabase = await createClient();
+  const supabase = getPublicClientOrNull();
+  if (!supabase) {
+    return fallback.map((p) => ({ slug: p.slug }));
+  }
+
   const { data, error } = await supabase
     .from("properties")
     .select("slug")
