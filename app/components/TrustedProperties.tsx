@@ -46,7 +46,7 @@ export default function TrustedProperties() {
           className="order-1 overflow-hidden rounded-2xl shadow-xl shadow-black/10 lg:order-2"
         >
           <Image
-            src="/image/image-10-213.png"
+            src="/image/feat.jpeg"
             alt="Modern villa with pool"
             width={1200}
             height={900}
