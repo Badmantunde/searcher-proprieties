@@ -4,18 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { DevelopingUnit, PropertyFormInput, PropertyType } from "@/lib/properties/types";
+import { slugify } from "@/lib/slugify";
 
 const BUCKET = "property-images";
 
 export type ActionResult = { error?: string; success?: string };
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 async function uploadImage(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -136,9 +129,6 @@ function validatePayload(payload: PropertyFormInput): string | null {
   if (!payload.long_description.trim()) return "Full description is required.";
   if (!payload.card_image_url) return "Card image is required.";
   if (!payload.gallery_hero_url) return "Gallery hero image is required.";
-  if (payload.property_type === "developed" && !payload.price_range?.trim()) {
-    return "Price range is required for developed properties.";
-  }
   return null;
 }
 

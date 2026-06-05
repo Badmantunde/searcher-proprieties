@@ -1,12 +1,20 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import type { PropertyRow, PropertyType } from "@/lib/properties/types";
 import type { ActionResult } from "@/lib/admin/actions";
 import {
   createPropertyAction,
   updatePropertyAction,
 } from "@/lib/admin/actions";
+import { slugify } from "@/lib/slugify";
 
 type Props = {
   mode: "create" | "edit";
@@ -15,7 +23,10 @@ type Props = {
 
 const emptyUnit = { type: "", rental: "", price: "" };
 
+type PendingThumb = { id: string; file: File; preview: string };
+
 export default function PropertyForm({ mode, property }: Props) {
+  const formRef = useRef<HTMLFormElement>(null);
   const action =
     mode === "create"
       ? createPropertyAction
@@ -26,6 +37,8 @@ export default function PropertyForm({ mode, property }: Props) {
     {},
   );
 
+  const [title, setTitle] = useState(property?.title ?? "");
+  const [slug, setSlug] = useState(property?.slug ?? "");
   const [propertyType, setPropertyType] = useState<PropertyType>(
     property?.property_type ?? "developed",
   );
@@ -33,9 +46,36 @@ export default function PropertyForm({ mode, property }: Props) {
     property?.units?.length ? property.units : [emptyUnit],
   );
 
+  const [cardFile, setCardFile] = useState<File | null>(null);
+  const [cardPreview, setCardPreview] = useState<string | null>(null);
+  const [heroFile, setHeroFile] = useState<File | null>(null);
+  const [heroPreview, setHeroPreview] = useState<string | null>(null);
+  const [pendingThumbs, setPendingThumbs] = useState<PendingThumb[]>([]);
+
   useEffect(() => {
     if (property?.units?.length) setUnits(property.units);
   }, [property]);
+
+  useEffect(() => {
+    if (property) {
+      setTitle(property.title);
+      setSlug(property.slug);
+    }
+  }, [property]);
+
+  useEffect(() => {
+    if (mode === "create") {
+      setSlug(slugify(title));
+    }
+  }, [title, mode]);
+
+  useEffect(() => {
+    return () => {
+      if (cardPreview?.startsWith("blob:")) URL.revokeObjectURL(cardPreview);
+      if (heroPreview?.startsWith("blob:")) URL.revokeObjectURL(heroPreview);
+      pendingThumbs.forEach((t) => URL.revokeObjectURL(t.preview));
+    };
+  }, [cardPreview, heroPreview, pendingThumbs]);
 
   function updateUnit(index: number, field: keyof typeof emptyUnit, value: string) {
     setUnits((prev) =>
@@ -51,8 +91,70 @@ export default function PropertyForm({ mode, property }: Props) {
     setUnits((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function handleFileSelect(
+    file: File | undefined,
+    setFile: (f: File | null) => void,
+    setPreview: (url: string | null) => void,
+    currentPreview: string | null,
+  ) {
+    if (!file) return;
+    if (currentPreview?.startsWith("blob:")) URL.revokeObjectURL(currentPreview);
+    setFile(file);
+    setPreview(URL.createObjectURL(file));
+  }
+
+  function clearFileSelection(
+    setFile: (f: File | null) => void,
+    setPreview: (url: string | null) => void,
+    currentPreview: string | null,
+  ) {
+    if (currentPreview?.startsWith("blob:")) URL.revokeObjectURL(currentPreview);
+    setFile(null);
+    setPreview(null);
+  }
+
+  function handleGallerySelect(files: FileList | null) {
+    if (!files?.length) return;
+    const added: PendingThumb[] = Array.from(files).map((file) => ({
+      id: crypto.randomUUID(),
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+    setPendingThumbs((prev) => [...prev, ...added]);
+  }
+
+  function removePendingThumb(id: string) {
+    setPendingThumbs((prev) => {
+      const target = prev.find((t) => t.id === id);
+      if (target) URL.revokeObjectURL(target.preview);
+      return prev.filter((t) => t.id !== id);
+    });
+  }
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const fd = new FormData(form);
+
+    fd.set("slug", slug);
+
+    if (cardFile) fd.set("card_image", cardFile);
+    else fd.delete("card_image");
+
+    if (heroFile) fd.set("gallery_hero", heroFile);
+    else fd.delete("gallery_hero");
+
+    fd.delete("gallery_thumbnails");
+    pendingThumbs.forEach((t) => fd.append("gallery_thumbnails", t.file));
+
+    formAction(fd);
+  }
+
+  const cardDisplay = cardPreview ?? property?.card_image_url ?? null;
+  const heroDisplay = heroPreview ?? property?.gallery_hero_url ?? null;
+
   return (
-    <form action={formAction} className="space-y-8">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
       {state.error && (
         <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {state.error}
@@ -62,8 +164,31 @@ export default function PropertyForm({ mode, property }: Props) {
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Basics</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Field label="Title" name="title" defaultValue={property?.title} required />
-          <Field label="Slug" name="slug" defaultValue={property?.slug} required />
+          <div>
+            <label htmlFor="title" className="mb-1.5 block text-sm font-medium text-slate-700">
+              Title
+            </label>
+            <input
+              id="title"
+              name="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+              className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="slug-display" className="mb-1.5 block text-sm font-medium text-slate-700">
+              Slug <span className="font-normal text-slate-400">(auto-generated)</span>
+            </label>
+            <input
+              id="slug-display"
+              value={slug}
+              readOnly
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-600"
+            />
+            <input type="hidden" name="slug" value={slug} />
+          </div>
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Property type
@@ -106,39 +231,49 @@ export default function PropertyForm({ mode, property }: Props) {
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Images</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <FileField
+          <ImageUploadField
             label="Card thumbnail"
             name="card_image"
-            hint={property?.card_image_url ? "Leave empty to keep current image." : undefined}
-            preview={property?.card_image_url}
+            required={mode === "create" && !property?.card_image_url}
+            hint={
+              property?.card_image_url && !cardFile
+                ? "Select a new image to replace the current one."
+                : undefined
+            }
+            preview={cardDisplay}
+            hasNewSelection={Boolean(cardFile)}
+            onSelect={(file) =>
+              handleFileSelect(file, setCardFile, setCardPreview, cardPreview)
+            }
+            onClear={() =>
+              clearFileSelection(setCardFile, setCardPreview, cardPreview)
+            }
           />
-          <FileField
+          <ImageUploadField
             label="Gallery hero"
             name="gallery_hero"
-            hint={property?.gallery_hero_url ? "Leave empty to keep current image." : undefined}
-            preview={property?.gallery_hero_url}
+            required={mode === "create" && !property?.gallery_hero_url}
+            hint={
+              property?.gallery_hero_url && !heroFile
+                ? "Select a new image to replace the current one."
+                : undefined
+            }
+            preview={heroDisplay}
+            hasNewSelection={Boolean(heroFile)}
+            onSelect={(file) =>
+              handleFileSelect(file, setHeroFile, setHeroPreview, heroPreview)
+            }
+            onClear={() =>
+              clearFileSelection(setHeroFile, setHeroPreview, heroPreview)
+            }
           />
           <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
-              Additional gallery images
-            </label>
-            <input
-              type="file"
-              name="gallery_thumbnails"
-              accept="image/*"
-              multiple
-              className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+            <GalleryThumbnailsField
+              existing={property?.gallery_thumbnail_urls ?? []}
+              pending={pendingThumbs}
+              onSelect={handleGallerySelect}
+              onRemovePending={removePendingThumb}
             />
-            {property?.gallery_thumbnail_urls?.length ? (
-              <ul className="mt-3 flex flex-wrap gap-2">
-                {property.gallery_thumbnail_urls.map((url) => (
-                  <li key={url}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="h-16 w-24 rounded-lg object-cover" />
-                  </li>
-                ))}
-              </ul>
-            ) : null}
           </div>
         </div>
       </section>
@@ -151,7 +286,6 @@ export default function PropertyForm({ mode, property }: Props) {
               label="Price range"
               name="price_range"
               defaultValue={property?.price_range ?? ""}
-              required
             />
             <TextArea
               label="Amenities (one per line)"
@@ -257,7 +391,11 @@ export default function PropertyForm({ mode, property }: Props) {
               defaultValue={property?.featured_secondary_badge ?? ""}
             />
           </div>
-          <Checkbox label="Published (visible on website)" name="published" defaultChecked={property?.published} />
+          <Checkbox
+            label="Published (visible on website)"
+            name="published"
+            defaultChecked={property?.published}
+          />
         </div>
       </section>
 
@@ -271,6 +409,158 @@ export default function PropertyForm({ mode, property }: Props) {
         </button>
       </div>
     </form>
+  );
+}
+
+function ImagePreview({
+  src,
+  alt,
+  onClear,
+}: {
+  src: string;
+  alt: string;
+  onClear: () => void;
+}) {
+  return (
+    <div className="relative mt-3 inline-block">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className="h-32 w-44 rounded-lg border border-slate-200 object-cover"
+      />
+      <button
+        type="button"
+        onClick={onClear}
+        aria-label="Remove selected image"
+        className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white shadow-md hover:bg-red-600"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+function ImageUploadField({
+  label,
+  name,
+  hint,
+  preview,
+  hasNewSelection,
+  required,
+  onSelect,
+  onClear,
+}: {
+  label: string;
+  name: string;
+  hint?: string;
+  preview: string | null;
+  hasNewSelection: boolean;
+  required?: boolean;
+  onSelect: (file: File | undefined) => void;
+  onClear: () => void;
+}) {
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function handleClear() {
+    onClear();
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  return (
+    <div>
+      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
+        {label}
+      </label>
+      <input
+        ref={inputRef}
+        id={inputId}
+        name={name}
+        type="file"
+        accept="image/*"
+        required={required}
+        onChange={(e) => onSelect(e.target.files?.[0])}
+        className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+      />
+      {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
+      {preview ? (
+        hasNewSelection ? (
+          <ImagePreview src={preview} alt={label} onClear={handleClear} />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={preview}
+            alt={label}
+            className="mt-3 h-32 w-44 rounded-lg border border-slate-200 object-cover"
+          />
+        )
+      ) : null}
+    </div>
+  );
+}
+
+function GalleryThumbnailsField({
+  existing,
+  pending,
+  onSelect,
+  onRemovePending,
+}: {
+  existing: string[];
+  pending: PendingThumb[];
+  onSelect: (files: FileList | null) => void;
+  onRemovePending: (id: string) => void;
+}) {
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div>
+      <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
+        Additional gallery images
+      </label>
+      <input
+        ref={inputRef}
+        id={inputId}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => {
+          onSelect(e.target.files);
+          if (inputRef.current) inputRef.current.value = "";
+        }}
+        className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
+      />
+      <div className="mt-3 flex flex-wrap gap-3">
+        {existing.map((url) => (
+          <div key={url} className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt="" className="h-24 w-32 rounded-lg border border-slate-200 object-cover" />
+            <span className="absolute -right-1 -top-1 rounded-full bg-slate-500 px-1.5 py-0.5 text-[10px] font-medium text-white">
+              saved
+            </span>
+          </div>
+        ))}
+        {pending.map((thumb) => (
+          <div key={thumb.id} className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumb.preview}
+              alt=""
+              className="h-24 w-32 rounded-lg border border-brand/30 object-cover"
+            />
+            <button
+              type="button"
+              onClick={() => onRemovePending(thumb.id)}
+              aria-label="Remove selected image"
+              className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-sm font-bold text-white shadow-md hover:bg-red-600"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -340,38 +630,6 @@ function TextArea({
         required={required}
         className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
       />
-    </div>
-  );
-}
-
-function FileField({
-  label,
-  name,
-  hint,
-  preview,
-}: {
-  label: string;
-  name: string;
-  hint?: string;
-  preview?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor={name} className="mb-1.5 block text-sm font-medium text-slate-700">
-        {label}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type="file"
-        accept="image/*"
-        className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
-      />
-      {hint ? <p className="mt-1 text-xs text-slate-500">{hint}</p> : null}
-      {preview ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt="" className="mt-3 h-24 w-36 rounded-lg object-cover" />
-      ) : null}
     </div>
   );
 }
