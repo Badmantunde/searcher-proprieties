@@ -8,6 +8,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { useRouter } from "next/navigation";
 import type { PropertyRow, PropertyType } from "@/lib/properties/types";
 import type { ActionResult } from "@/lib/admin/actions";
 import {
@@ -26,6 +27,7 @@ const emptyUnit = { type: "", rental: "", price: "" };
 type PendingThumb = { id: string; file: File; preview: string };
 
 export default function PropertyForm({ mode, property }: Props) {
+  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const action =
     mode === "create"
@@ -51,6 +53,14 @@ export default function PropertyForm({ mode, property }: Props) {
   const [heroFile, setHeroFile] = useState<File | null>(null);
   const [heroPreview, setHeroPreview] = useState<string | null>(null);
   const [pendingThumbs, setPendingThumbs] = useState<PendingThumb[]>([]);
+  const [clientError, setClientError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (state.success) {
+      router.push("/admin/properties");
+      router.refresh();
+    }
+  }, [state.success, router]);
 
   useEffect(() => {
     if (property?.units?.length) setUnits(property.units);
@@ -137,16 +147,25 @@ export default function PropertyForm({ mode, property }: Props) {
     const fd = new FormData(form);
 
     fd.set("slug", slug);
+    fd.set("property_type", propertyType);
 
-    if (cardFile) fd.set("card_image", cardFile);
-    else fd.delete("card_image");
+    if (mode === "create") {
+      if (!cardFile) {
+        setClientError("Card thumbnail is required.");
+        return;
+      }
+      if (!heroFile) {
+        setClientError("Gallery hero image is required.");
+        return;
+      }
+    }
 
-    if (heroFile) fd.set("gallery_hero", heroFile);
-    else fd.delete("gallery_hero");
+    if (cardFile) fd.append("card_image", cardFile);
+    if (heroFile) fd.append("gallery_hero", heroFile);
 
-    fd.delete("gallery_thumbnails");
     pendingThumbs.forEach((t) => fd.append("gallery_thumbnails", t.file));
 
+    setClientError(null);
     formAction(fd);
   }
 
@@ -154,10 +173,15 @@ export default function PropertyForm({ mode, property }: Props) {
   const heroDisplay = heroPreview ?? property?.gallery_hero_url ?? null;
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8">
-      {state.error && (
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      encType="multipart/form-data"
+      className="space-y-8"
+    >
+      {(clientError || state.error) && (
         <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {state.error}
+          {clientError ?? state.error}
         </p>
       )}
 
@@ -233,7 +257,6 @@ export default function PropertyForm({ mode, property }: Props) {
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <ImageUploadField
             label="Card thumbnail"
-            name="card_image"
             required={mode === "create" && !property?.card_image_url}
             hint={
               property?.card_image_url && !cardFile
@@ -251,7 +274,6 @@ export default function PropertyForm({ mode, property }: Props) {
           />
           <ImageUploadField
             label="Gallery hero"
-            name="gallery_hero"
             required={mode === "create" && !property?.gallery_hero_url}
             hint={
               property?.gallery_hero_url && !heroFile
@@ -443,7 +465,6 @@ function ImagePreview({
 
 function ImageUploadField({
   label,
-  name,
   hint,
   preview,
   hasNewSelection,
@@ -452,7 +473,6 @@ function ImageUploadField({
   onClear,
 }: {
   label: string;
-  name: string;
   hint?: string;
   preview: string | null;
   hasNewSelection: boolean;
@@ -472,14 +492,13 @@ function ImageUploadField({
     <div>
       <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-slate-700">
         {label}
+        {required ? <span className="text-red-500"> *</span> : null}
       </label>
       <input
         ref={inputRef}
         id={inputId}
-        name={name}
         type="file"
         accept="image/*"
-        required={required}
         onChange={(e) => onSelect(e.target.files?.[0])}
         className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white"
       />

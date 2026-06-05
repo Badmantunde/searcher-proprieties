@@ -10,11 +10,40 @@ const BUCKET = "property-images";
 
 export type ActionResult = { error?: string; success?: string };
 
+type UploadResult = { url: string | null; error?: string };
+
+function isUploadFile(value: FormDataEntryValue | null): value is File {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "arrayBuffer" in value &&
+    "size" in value &&
+    typeof (value as File).arrayBuffer === "function" &&
+    (value as File).size > 0
+  );
+}
+
+async function requireUser(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<{ error: string } | { user: NonNullable<Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"]> }> {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return { error: "You must be signed in to manage properties." };
+  }
+
+  return { user };
+}
+
 async function uploadImage(
   supabase: Awaited<ReturnType<typeof createClient>>,
   file: File,
   folder: string,
-): Promise<string | null> {
+  label: string,
+): Promise<UploadResult> {
   const ext = file.name.split(".").pop() || "jpg";
   const path = `${folder}/${crypto.randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -24,10 +53,15 @@ async function uploadImage(
     upsert: false,
   });
 
-  if (error) return null;
+  if (error) {
+    return {
+      url: null,
+      error: `Failed to upload ${label}: ${error.message}`,
+    };
+  }
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  return { url: data.publicUrl };
 }
 
 function parseUnits(raw: string | null): DevelopingUnit[] {
@@ -72,7 +106,10 @@ function buildPayload(
     price_range: String(formData.get("price_range") || "") || undefined,
     amenities: parseAmenities(formData.get("amenities") as string | null),
     lease_label: String(formData.get("lease_label") || "") || undefined,
-    progress: progressRaw ? Number(progressRaw) : undefined,
+    progress:
+      property_type === "developing" && progressRaw
+        ? Number(progressRaw)
+        : undefined,
     completion: String(formData.get("completion") || "") || undefined,
     units: parseUnits(formData.get("units") as string | null),
     featured: formData.get("featured") === "on",
@@ -91,34 +128,40 @@ async function resolveImageUrls(
     gallery_hero_url: string;
     gallery_thumbnail_urls: string[];
   },
-) {
+): Promise<
+  | { urls: { card_image_url: string; gallery_hero_url: string; gallery_thumbnail_urls: string[] }; error?: undefined }
+  | { urls?: undefined; error: string }
+> {
   const supabase = await createClient();
-  const folder = slugify(String(formData.get("slug") || "property"));
+  const folder = slugify(String(formData.get("slug") || "property")) || "property";
 
-  const cardFile = formData.get("card_image") as File | null;
   let card_image_url = existing?.card_image_url ?? "";
-  if (cardFile && cardFile.size > 0) {
-    const uploaded = await uploadImage(supabase, cardFile, folder);
-    if (uploaded) card_image_url = uploaded;
+  const cardFile = formData.get("card_image");
+  if (isUploadFile(cardFile)) {
+    const uploaded = await uploadImage(supabase, cardFile, folder, "card thumbnail");
+    if (uploaded.error) return { error: uploaded.error };
+    if (uploaded.url) card_image_url = uploaded.url;
   }
 
-  const heroFile = formData.get("gallery_hero") as File | null;
   let gallery_hero_url = existing?.gallery_hero_url ?? "";
-  if (heroFile && heroFile.size > 0) {
-    const uploaded = await uploadImage(supabase, heroFile, folder);
-    if (uploaded) gallery_hero_url = uploaded;
+  const heroFile = formData.get("gallery_hero");
+  if (isUploadFile(heroFile)) {
+    const uploaded = await uploadImage(supabase, heroFile, folder, "gallery hero");
+    if (uploaded.error) return { error: uploaded.error };
+    if (uploaded.url) gallery_hero_url = uploaded.url;
   }
 
   const gallery_thumbnail_urls = [...(existing?.gallery_thumbnail_urls ?? [])];
-  const thumbFiles = formData.getAll("gallery_thumbnails") as File[];
-  for (const file of thumbFiles) {
-    if (file.size > 0) {
-      const uploaded = await uploadImage(supabase, file, folder);
-      if (uploaded) gallery_thumbnail_urls.push(uploaded);
-    }
+  for (const file of formData.getAll("gallery_thumbnails")) {
+    if (!isUploadFile(file)) continue;
+    const uploaded = await uploadImage(supabase, file, folder, "gallery image");
+    if (uploaded.error) return { error: uploaded.error };
+    if (uploaded.url) gallery_thumbnail_urls.push(uploaded.url);
   }
 
-  return { card_image_url, gallery_hero_url, gallery_thumbnail_urls };
+  return {
+    urls: { card_image_url, gallery_hero_url, gallery_thumbnail_urls },
+  };
 }
 
 function validatePayload(payload: PropertyFormInput): string | null {
@@ -143,11 +186,15 @@ function dbRecord(payload: PropertyFormInput) {
     card_image_url: payload.card_image_url,
     gallery_hero_url: payload.gallery_hero_url,
     gallery_thumbnail_urls: payload.gallery_thumbnail_urls,
-    price_range: payload.property_type === "developed" ? payload.price_range : null,
+    price_range:
+      payload.property_type === "developed" ? payload.price_range || null : null,
     amenities: payload.property_type === "developed" ? payload.amenities : [],
-    lease_label: payload.property_type === "developing" ? payload.lease_label : null,
-    progress: payload.property_type === "developing" ? payload.progress : null,
-    completion: payload.property_type === "developing" ? payload.completion : null,
+    lease_label:
+      payload.property_type === "developing" ? payload.lease_label || null : null,
+    progress:
+      payload.property_type === "developing" ? payload.progress ?? null : null,
+    completion:
+      payload.property_type === "developing" ? payload.completion || null : null,
     units: payload.property_type === "developing" ? payload.units : [],
     featured: payload.featured ?? false,
     featured_primary_badge: payload.featured_primary_badge ?? null,
@@ -188,18 +235,29 @@ export async function createPropertyAction(
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const urls = await resolveImageUrls(formData);
-  const payload = buildPayload(formData, urls);
-  const validationError = validatePayload(payload);
-  if (validationError) return { error: validationError };
+  try {
+    const supabase = await createClient();
+    const auth = await requireUser(supabase);
+    if ("error" in auth) return { error: auth.error };
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("properties").insert(dbRecord(payload));
+    const resolved = await resolveImageUrls(formData);
+    if ("error" in resolved) return { error: resolved.error };
 
-  if (error) return { error: error.message };
+    const payload = buildPayload(formData, resolved.urls);
+    const validationError = validatePayload(payload);
+    if (validationError) return { error: validationError };
 
-  revalidateSite();
-  redirect("/admin/properties");
+    const { error } = await supabase.from("properties").insert(dbRecord(payload));
+    if (error) return { error: error.message };
+
+    revalidateSite();
+    return { success: "Property created successfully." };
+  } catch (err) {
+    return {
+      error:
+        err instanceof Error ? err.message : "Something went wrong while creating the property.",
+    };
+  }
 }
 
 export async function updatePropertyAction(
@@ -207,34 +265,45 @@ export async function updatePropertyAction(
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const supabase = await createClient();
-  const { data: existing } = await supabase
-    .from("properties")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  try {
+    const supabase = await createClient();
+    const auth = await requireUser(supabase);
+    if ("error" in auth) return { error: auth.error };
 
-  if (!existing) return { error: "Property not found." };
+    const { data: existing } = await supabase
+      .from("properties")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-  const urls = await resolveImageUrls(formData, {
-    card_image_url: existing.card_image_url,
-    gallery_hero_url: existing.gallery_hero_url,
-    gallery_thumbnail_urls: existing.gallery_thumbnail_urls ?? [],
-  });
+    if (!existing) return { error: "Property not found." };
 
-  const payload = buildPayload(formData, urls);
-  const validationError = validatePayload(payload);
-  if (validationError) return { error: validationError };
+    const resolved = await resolveImageUrls(formData, {
+      card_image_url: existing.card_image_url,
+      gallery_hero_url: existing.gallery_hero_url,
+      gallery_thumbnail_urls: existing.gallery_thumbnail_urls ?? [],
+    });
+    if ("error" in resolved) return { error: resolved.error };
 
-  const { error } = await supabase
-    .from("properties")
-    .update(dbRecord(payload))
-    .eq("id", id);
+    const payload = buildPayload(formData, resolved.urls);
+    const validationError = validatePayload(payload);
+    if (validationError) return { error: validationError };
 
-  if (error) return { error: error.message };
+    const { error } = await supabase
+      .from("properties")
+      .update(dbRecord(payload))
+      .eq("id", id);
 
-  revalidateSite();
-  redirect("/admin/properties");
+    if (error) return { error: error.message };
+
+    revalidateSite();
+    return { success: "Property updated successfully." };
+  } catch (err) {
+    return {
+      error:
+        err instanceof Error ? err.message : "Something went wrong while updating the property.",
+    };
+  }
 }
 
 export async function deletePropertyAction(id: string) {
