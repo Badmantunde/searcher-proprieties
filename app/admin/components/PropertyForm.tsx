@@ -15,6 +15,9 @@ import {
   createPropertyAction,
   updatePropertyAction,
 } from "@/lib/admin/actions";
+import { uploadPropertyImage } from "@/lib/admin/upload-client";
+import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { slugify } from "@/lib/slugify";
 
 type Props = {
@@ -54,6 +57,7 @@ export default function PropertyForm({ mode, property }: Props) {
   const [heroPreview, setHeroPreview] = useState<string | null>(null);
   const [pendingThumbs, setPendingThumbs] = useState<PendingThumb[]>([]);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (state.success) {
@@ -141,13 +145,14 @@ export default function PropertyForm({ mode, property }: Props) {
     });
   }
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = e.currentTarget;
-    const fd = new FormData(form);
+    setClientError(null);
 
-    fd.set("slug", slug);
-    fd.set("property_type", propertyType);
+    if (!isSupabaseConfigured()) {
+      setClientError("Supabase is not configured.");
+      return;
+    }
 
     if (mode === "create") {
       if (!cardFile) {
@@ -160,13 +165,79 @@ export default function PropertyForm({ mode, property }: Props) {
       }
     }
 
-    if (cardFile) fd.append("card_image", cardFile);
-    if (heroFile) fd.append("gallery_hero", heroFile);
+    const folder = slug || slugify(title) || "property";
+    const supabase = createClient();
 
-    pendingThumbs.forEach((t) => fd.append("gallery_thumbnails", t.file));
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setClientError("You must be signed in. Please log in again.");
+      return;
+    }
 
-    setClientError(null);
-    formAction(fd);
+    setUploading(true);
+
+    try {
+      let card_image_url = property?.card_image_url ?? "";
+      if (cardFile) {
+        const uploaded = await uploadPropertyImage(supabase, cardFile, folder);
+        if (uploaded.error || !uploaded.url) {
+          setClientError(
+            uploaded.error
+              ? `Failed to upload card thumbnail: ${uploaded.error}`
+              : "Failed to upload card thumbnail.",
+          );
+          return;
+        }
+        card_image_url = uploaded.url;
+      }
+
+      let gallery_hero_url = property?.gallery_hero_url ?? "";
+      if (heroFile) {
+        const uploaded = await uploadPropertyImage(supabase, heroFile, folder);
+        if (uploaded.error || !uploaded.url) {
+          setClientError(
+            uploaded.error
+              ? `Failed to upload gallery hero: ${uploaded.error}`
+              : "Failed to upload gallery hero.",
+          );
+          return;
+        }
+        gallery_hero_url = uploaded.url;
+      }
+
+      const gallery_thumbnail_urls = [...(property?.gallery_thumbnail_urls ?? [])];
+      for (const thumb of pendingThumbs) {
+        const uploaded = await uploadPropertyImage(supabase, thumb.file, folder);
+        if (uploaded.error || !uploaded.url) {
+          setClientError(
+            uploaded.error
+              ? `Failed to upload gallery image: ${uploaded.error}`
+              : "Failed to upload gallery image.",
+          );
+          return;
+        }
+        gallery_thumbnail_urls.push(uploaded.url);
+      }
+
+      const form = e.currentTarget;
+      const fd = new FormData(form);
+
+      fd.set("slug", slug);
+      fd.set("property_type", propertyType);
+      fd.set("card_image_url", card_image_url);
+      fd.set("gallery_hero_url", gallery_hero_url);
+      fd.set("gallery_thumbnail_urls", JSON.stringify(gallery_thumbnail_urls));
+
+      formAction(fd);
+    } catch (err) {
+      setClientError(
+        err instanceof Error ? err.message : "Upload failed. Please try again.",
+      );
+    } finally {
+      setUploading(false);
+    }
   }
 
   const cardDisplay = cardPreview ?? property?.card_image_url ?? null;
@@ -424,10 +495,16 @@ export default function PropertyForm({ mode, property }: Props) {
       <div className="flex flex-wrap gap-3">
         <button
           type="submit"
-          disabled={pending}
+          disabled={pending || uploading}
           className="rounded-lg bg-brand px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {pending ? "Saving…" : mode === "create" ? "Create property" : "Save changes"}
+          {uploading
+            ? "Uploading images…"
+            : pending
+              ? "Saving…"
+              : mode === "create"
+                ? "Create property"
+                : "Save changes"}
         </button>
       </div>
     </form>

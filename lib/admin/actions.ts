@@ -6,26 +6,14 @@ import { createClient } from "@/lib/supabase/server";
 import type { DevelopingUnit, PropertyFormInput, PropertyType } from "@/lib/properties/types";
 import { slugify } from "@/lib/slugify";
 
-const BUCKET = "property-images";
-
 export type ActionResult = { error?: string; success?: string };
-
-type UploadResult = { url: string | null; error?: string };
-
-function isUploadFile(value: FormDataEntryValue | null): value is File {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "arrayBuffer" in value &&
-    "size" in value &&
-    typeof (value as File).arrayBuffer === "function" &&
-    (value as File).size > 0
-  );
-}
 
 async function requireUser(
   supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<{ error: string } | { user: NonNullable<Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"]> }> {
+): Promise<
+  | { error: string }
+  | { user: NonNullable<Awaited<ReturnType<typeof supabase.auth.getUser>>["data"]["user"]> }
+> {
   const {
     data: { user },
     error,
@@ -36,32 +24,6 @@ async function requireUser(
   }
 
   return { user };
-}
-
-async function uploadImage(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  file: File,
-  folder: string,
-  label: string,
-): Promise<UploadResult> {
-  const ext = file.name.split(".").pop() || "jpg";
-  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, {
-    contentType: file.type || "image/jpeg",
-    upsert: false,
-  });
-
-  if (error) {
-    return {
-      url: null,
-      error: `Failed to upload ${label}: ${error.message}`,
-    };
-  }
-
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  return { url: data.publicUrl };
 }
 
 function parseUnits(raw: string | null): DevelopingUnit[] {
@@ -80,6 +42,28 @@ function parseAmenities(raw: string | null): string[] {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+function parseThumbnailUrls(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as string[];
+    return Array.isArray(parsed)
+      ? parsed.filter((url): url is string => typeof url === "string" && url.length > 0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function readImageUrls(formData: FormData) {
+  return {
+    card_image_url: String(formData.get("card_image_url") || ""),
+    gallery_hero_url: String(formData.get("gallery_hero_url") || ""),
+    gallery_thumbnail_urls: parseThumbnailUrls(
+      formData.get("gallery_thumbnail_urls") as string | null,
+    ),
+  };
 }
 
 function buildPayload(
@@ -118,49 +102,6 @@ function buildPayload(
     featured_secondary_badge:
       String(formData.get("featured_secondary_badge") || "") || undefined,
     published: formData.get("published") === "on",
-  };
-}
-
-async function resolveImageUrls(
-  formData: FormData,
-  existing?: {
-    card_image_url: string;
-    gallery_hero_url: string;
-    gallery_thumbnail_urls: string[];
-  },
-): Promise<
-  | { urls: { card_image_url: string; gallery_hero_url: string; gallery_thumbnail_urls: string[] }; error?: undefined }
-  | { urls?: undefined; error: string }
-> {
-  const supabase = await createClient();
-  const folder = slugify(String(formData.get("slug") || "property")) || "property";
-
-  let card_image_url = existing?.card_image_url ?? "";
-  const cardFile = formData.get("card_image");
-  if (isUploadFile(cardFile)) {
-    const uploaded = await uploadImage(supabase, cardFile, folder, "card thumbnail");
-    if (uploaded.error) return { error: uploaded.error };
-    if (uploaded.url) card_image_url = uploaded.url;
-  }
-
-  let gallery_hero_url = existing?.gallery_hero_url ?? "";
-  const heroFile = formData.get("gallery_hero");
-  if (isUploadFile(heroFile)) {
-    const uploaded = await uploadImage(supabase, heroFile, folder, "gallery hero");
-    if (uploaded.error) return { error: uploaded.error };
-    if (uploaded.url) gallery_hero_url = uploaded.url;
-  }
-
-  const gallery_thumbnail_urls = [...(existing?.gallery_thumbnail_urls ?? [])];
-  for (const file of formData.getAll("gallery_thumbnails")) {
-    if (!isUploadFile(file)) continue;
-    const uploaded = await uploadImage(supabase, file, folder, "gallery image");
-    if (uploaded.error) return { error: uploaded.error };
-    if (uploaded.url) gallery_thumbnail_urls.push(uploaded.url);
-  }
-
-  return {
-    urls: { card_image_url, gallery_hero_url, gallery_thumbnail_urls },
   };
 }
 
@@ -240,10 +181,8 @@ export async function createPropertyAction(
     const auth = await requireUser(supabase);
     if ("error" in auth) return { error: auth.error };
 
-    const resolved = await resolveImageUrls(formData);
-    if ("error" in resolved) return { error: resolved.error };
-
-    const payload = buildPayload(formData, resolved.urls);
+    const urls = readImageUrls(formData);
+    const payload = buildPayload(formData, urls);
     const validationError = validatePayload(payload);
     if (validationError) return { error: validationError };
 
@@ -255,7 +194,9 @@ export async function createPropertyAction(
   } catch (err) {
     return {
       error:
-        err instanceof Error ? err.message : "Something went wrong while creating the property.",
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while creating the property.",
     };
   }
 }
@@ -272,20 +213,14 @@ export async function updatePropertyAction(
 
     const { data: existing } = await supabase
       .from("properties")
-      .select("*")
+      .select("id")
       .eq("id", id)
       .maybeSingle();
 
     if (!existing) return { error: "Property not found." };
 
-    const resolved = await resolveImageUrls(formData, {
-      card_image_url: existing.card_image_url,
-      gallery_hero_url: existing.gallery_hero_url,
-      gallery_thumbnail_urls: existing.gallery_thumbnail_urls ?? [],
-    });
-    if ("error" in resolved) return { error: resolved.error };
-
-    const payload = buildPayload(formData, resolved.urls);
+    const urls = readImageUrls(formData);
+    const payload = buildPayload(formData, urls);
     const validationError = validatePayload(payload);
     if (validationError) return { error: validationError };
 
@@ -301,7 +236,9 @@ export async function updatePropertyAction(
   } catch (err) {
     return {
       error:
-        err instanceof Error ? err.message : "Something went wrong while updating the property.",
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while updating the property.",
     };
   }
 }
