@@ -1,16 +1,6 @@
+import PropertyVideoPlayer from "../PropertyVideoPlayer";
 import Reveal from "../Reveal";
-import VideoCard, { type Video } from "./VideoCard";
-
-const THUMBS = [
-  "/image/frame-52-260.png",
-  "/image/frame-53-261.png",
-  "/image/frame-54-262.png",
-];
-
-export const VIDEOS: Video[] = Array.from({ length: 6 }, (_, i) => ({
-  thumbnail: THUMBS[i % THUMBS.length],
-  title: "Lekki Premium Estates - Drone Tour",
-}));
+import { PROPERTY_VIDEO } from "@/lib/videos";
 
 export default function VideosGrid() {
   return (
@@ -19,18 +9,16 @@ export default function VideosGrid() {
       className="bg-white px-6 py-16 sm:px-10 sm:py-20 lg:px-16 lg:py-24"
     >
       <div className="mx-auto max-w-[1280px]">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3 lg:gap-10">
-          {VIDEOS.map((v, i) => (
-            <Reveal
-              key={i}
-              variant="fade-up"
-              delay={i * 90}
-              className="h-full"
-            >
-              <VideoCard {...v} />
-            </Reveal>
-          ))}
-        </div>
+        <Reveal variant="fade-up" className="mx-auto max-w-5xl">
+          <PropertyVideoPlayer />
+          <h2 className="mt-6 text-center text-xl font-bold text-slate-900 sm:text-2xl lg:text-3xl">
+            {PROPERTY_VIDEO.title}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-base text-slate-600 sm:text-lg">
+            Explore our properties through this cinematic walkthrough and
+            development showcase.
+          </p>
+        </Reveal>
       </div>
     </section>
   );

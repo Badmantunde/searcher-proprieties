@@ -1,15 +1,14 @@
 export const CONTACT = {
-  phoneDisplay: "+234 801 234 5678",
-  phoneE164: "+2348012345678",
-  whatsappNumber: "2348012345678",
+  phoneDisplay: "09093652468",
+  phoneE164: "+2349093652468",
+  whatsappNumber: "2349093652468",
   email: "Hello@searcherproperties.com",
   officeAddress: "No 7 Ebun Street, Abule Oja, Yaba, Lagos",
 } as const;
 
 export const SOCIAL = {
-  facebook: "https://www.facebook.com/searcherproperties",
-  instagram: "https://www.instagram.com/searcherproperties",
-  tiktok: "https://www.tiktok.com/@searcherproperties",
+  instagram:
+    "https://www.instagram.com/searcherproperties?igsh=bXNscjkxam9udzU5",
 } as const;
 
 export function telHref(phone = CONTACT.phoneE164): string {

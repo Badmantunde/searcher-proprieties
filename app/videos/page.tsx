@@ -7,7 +7,7 @@ import VideosGrid from "../components/videos-page/VideosGrid";
 export const metadata: Metadata = {
   title: "Property Videos — Searcher Properties",
   description:
-    "Explore Searcher Properties through cinematic walkthroughs, drone tours, and development updates.",
+    "Watch the Searcher Properties showcase — a cinematic walkthrough of our developments.",
 };
 
 export default function VideosPage() {

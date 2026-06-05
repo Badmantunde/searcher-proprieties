@@ -25,8 +25,8 @@ export default function VideosHero() {
           className="animate-rise-in mt-6 max-w-2xl text-base leading-relaxed text-white/80 sm:text-lg lg:mt-8 lg:text-xl lg:leading-9"
           style={{ animationDelay: "280ms" }}
         >
-          Explore our properties through cinematic walkthroughs, drone tours,
-          and development updates.
+          Explore our properties through a cinematic walkthrough and development
+          showcase.
         </p>
       </div>
     </section>
