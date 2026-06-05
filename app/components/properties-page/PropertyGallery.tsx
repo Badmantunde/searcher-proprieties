@@ -1,6 +1,5 @@
 "use client";
 
-import { optimizeImageUrl } from "@/lib/images/optimize-url";
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -12,10 +11,6 @@ type Props = {
 
 export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
   const slides = useMemo(() => [hero, ...thumbnails], [hero, thumbnails]);
-  const optimizedSlides = useMemo(
-    () => slides.map((src) => optimizeImageUrl(src, "hero")),
-    [slides],
-  );
   const [index, setIndex] = useState(0);
   const [heroLoaded, setHeroLoaded] = useState(false);
   const thumbRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -38,14 +33,13 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
   }, [go]);
 
   useEffect(() => {
-    const next = optimizedSlides[(index + 1) % optimizedSlides.length];
-    const prev =
-      optimizedSlides[(index - 1 + optimizedSlides.length) % optimizedSlides.length];
+    const next = slides[(index + 1) % slides.length];
+    const prev = slides[(index - 1 + slides.length) % slides.length];
     for (const src of [next, prev]) {
       const img = new window.Image();
       img.src = src;
     }
-  }, [index, optimizedSlides]);
+  }, [index, slides]);
 
   useEffect(() => {
     thumbRefs.current[index]?.scrollIntoView({
@@ -63,14 +57,15 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
             <div className="absolute inset-0 animate-pulse bg-slate-200" aria-hidden />
           ) : null}
           <Image
-            key={optimizedSlides[index]}
-            src={optimizedSlides[index]}
+            key={slides[index]}
+            src={slides[index]}
             alt={alt}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1280px) 100vw, 1280px"
             priority={index === 0}
             quality={80}
             onLoad={() => setHeroLoaded(true)}
+            onError={() => setHeroLoaded(true)}
             className={`object-cover transition-opacity duration-300 ${
               heroLoaded ? "opacity-100" : "opacity-0"
             }`}
@@ -120,7 +115,6 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
           >
             {slides.map((src, i) => {
               const active = i === index;
-              const thumbSrc = optimizeImageUrl(src, "thumb");
 
               return (
                 <button
@@ -143,7 +137,7 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
                   }`}
                 >
                   <Image
-                    src={thumbSrc}
+                    src={src}
                     alt=""
                     fill
                     sizes="160px"
