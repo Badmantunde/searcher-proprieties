@@ -13,6 +13,7 @@ import {
   STATIC_DEVELOPING,
   STATIC_FEATURED,
 } from "./static";
+import { developedToSearchItem, developingToSearchItem } from "./search";
 import type {
   DevelopedProperty,
   DevelopingProject,
@@ -40,6 +41,18 @@ async function fetchPublishedByType(
 
   if (error || !data) return [];
   return data.map((row) => normalizePropertyRow(row));
+}
+
+export async function getSearchableProperties() {
+  const [developed, developing] = await Promise.all([
+    getDevelopedProperties(),
+    getDevelopingProjects(),
+  ]);
+
+  return [
+    ...developed.map(developedToSearchItem),
+    ...developing.map(developingToSearchItem),
+  ];
 }
 
 export async function getDevelopedProperties(): Promise<DevelopedProperty[]> {

@@ -12,13 +12,21 @@ export const metadata: Metadata = {
     "Explore Searcher Properties' complete collection of luxury completed homes and developing investment projects.",
 };
 
-export default function PropertiesPage() {
+export default async function PropertiesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; category?: string }>;
+}) {
+  const { q, category } = await searchParams;
+  const showDeveloped = !category || category === "developed";
+  const showDeveloping = !category || category === "developing";
+
   return (
     <main className="flex min-h-screen flex-col bg-white">
       <Nav />
       <PropertiesHero />
-      <DevelopedProperties />
-      <DevelopingProjects />
+      {showDeveloped ? <DevelopedProperties query={q} /> : null}
+      {showDeveloping ? <DevelopingProjects query={q} /> : null}
       <Footer />
     </main>
   );

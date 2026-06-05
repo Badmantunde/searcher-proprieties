@@ -1,10 +1,22 @@
 import { getDevelopedProperties } from "@/lib/properties/fetch";
+import { developedToSearchItem, matchesPropertyQuery } from "@/lib/properties/search";
 import Reveal from "../Reveal";
 import DevelopedCard from "./DevelopedCard";
 import SectionHeader from "./SectionHeader";
 
-export default async function DevelopedProperties() {
-  const properties = await getDevelopedProperties();
+type Props = {
+  query?: string;
+};
+
+export default async function DevelopedProperties({ query }: Props) {
+  const all = await getDevelopedProperties();
+  const properties = query?.trim()
+    ? all.filter((p) =>
+        matchesPropertyQuery(developedToSearchItem(p).searchText, query),
+      )
+    : all;
+
+  if (properties.length === 0) return null;
 
   return (
     <section
