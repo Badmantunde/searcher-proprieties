@@ -40,7 +40,7 @@ export default async function DevelopingDetailPage({
   if (!project) notFound();
 
   return (
-    <main className="flex min-h-screen flex-col bg-white">
+    <main className="flex min-h-screen flex-col overflow-x-hidden bg-white">
       <Nav />
 
       <PropertyGallery
