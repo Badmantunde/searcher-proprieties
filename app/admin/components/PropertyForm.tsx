@@ -147,6 +147,7 @@ export default function PropertyForm({ mode, property }: Props) {
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     setClientError(null);
 
     if (!isSupabaseConfigured()) {
@@ -221,7 +222,6 @@ export default function PropertyForm({ mode, property }: Props) {
         gallery_thumbnail_urls.push(uploaded.url);
       }
 
-      const form = e.currentTarget;
       const fd = new FormData(form);
 
       fd.set("slug", slug);
