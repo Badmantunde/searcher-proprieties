@@ -1,10 +1,11 @@
-import { PROPERTY_VIDEO } from "@/lib/videos";
+import type { SiteVideo } from "@/lib/videos";
 
 type Props = {
+  video: SiteVideo;
   className?: string;
 };
 
-export default function PropertyVideoPlayer({ className = "" }: Props) {
+export default function PropertyVideoPlayer({ video, className = "" }: Props) {
   return (
     <div
       className={`overflow-hidden rounded-2xl bg-black shadow-xl shadow-black/15 sm:rounded-3xl ${className}`}
@@ -14,8 +15,8 @@ export default function PropertyVideoPlayer({ className = "" }: Props) {
         controls
         playsInline
         preload="metadata"
-        src={PROPERTY_VIDEO.src}
-        title={PROPERTY_VIDEO.title}
+        src={video.src}
+        title={video.title}
       >
         Your browser does not support the video tag.
       </video>
