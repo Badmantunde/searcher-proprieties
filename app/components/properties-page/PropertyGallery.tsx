@@ -50,9 +50,10 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
   }, [index]);
 
   return (
-    <div className="flex w-full min-w-0 flex-col items-stretch overflow-x-hidden">
-      <div className="relative isolate w-full min-w-0 overflow-hidden bg-slate-100">
-        <div className="relative aspect-[4/3] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
+    <div className="flex w-full min-w-0 flex-col items-stretch overflow-x-hidden px-4 pt-6 sm:px-8 sm:pt-8 lg:px-16 lg:pt-10">
+      <div className="mx-auto w-full min-w-0 max-w-[1280px]">
+        <div className="relative isolate w-full min-w-0 overflow-hidden rounded-xl bg-slate-100 sm:rounded-2xl">
+          <div className="relative aspect-[4/3] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
           {!heroLoaded ? (
             <div className="absolute inset-0 animate-pulse bg-slate-200" aria-hidden />
           ) : null}
@@ -104,14 +105,13 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
             </button>
           </>
         ) : null}
-      </div>
+        </div>
 
-      {slides.length > 1 ? (
-        <div className="mx-auto w-full min-w-0 max-w-[1280px] px-4 pt-6 sm:px-8 sm:pt-8 lg:px-16">
+        {slides.length > 1 ? (
           <div
             role="tablist"
             aria-label="Gallery thumbnails"
-            className="scrollbar-hide flex w-full min-w-0 touch-pan-x snap-x snap-mandatory items-center gap-3 overflow-x-auto overscroll-x-contain pb-2 sm:gap-4"
+            className="scrollbar-hide flex w-full min-w-0 touch-pan-x snap-x snap-mandatory items-center gap-3 overflow-x-auto overscroll-x-contain pt-6 pb-2 sm:gap-4 sm:pt-8"
           >
             {slides.map((src, i) => {
               const active = i === index;
@@ -149,8 +149,8 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
               );
             })}
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }
