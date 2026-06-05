@@ -10,6 +10,8 @@ import Stats from "./components/Stats";
 import TrustedProperties from "./components/TrustedProperties";
 import VideoShowcase from "./components/VideoShowcase";
 
+export const revalidate = 60;
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col bg-white">

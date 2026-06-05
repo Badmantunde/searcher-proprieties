@@ -5,6 +5,8 @@ import DevelopedHero from "../../components/properties-page/developed/DevelopedH
 import DevelopedGrid from "../../components/properties-page/developed/DevelopedGrid";
 import { getDevelopedProperties } from "@/lib/properties/fetch";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Developed Properties — Searcher Properties",
   description:

@@ -4,6 +4,8 @@ import Footer from "../components/Footer";
 import PropertiesHero from "../components/properties-page/PropertiesHero";
 import DevelopedProperties from "../components/properties-page/DevelopedProperties";
 import DevelopingProjects from "../components/properties-page/DevelopingProjects";
+
+export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Properties — Searcher Properties",
   description:

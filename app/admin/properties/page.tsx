@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AdminShell from "../components/AdminShell";
+import { publishPropertyAction } from "@/lib/admin/actions";
 import { getAllPropertiesAdmin } from "@/lib/properties/fetch";
 
 export default async function AdminPropertiesPage() {
@@ -71,12 +72,24 @@ export default async function AdminPropertiesPage() {
                     {new Date(property.updated_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/properties/${property.id}`}
-                      className="font-medium text-brand hover:underline"
-                    >
-                      Edit
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      {!property.published ? (
+                        <form action={publishPropertyAction.bind(null, property.id)}>
+                          <button
+                            type="submit"
+                            className="font-medium text-emerald-700 hover:underline"
+                          >
+                            Publish
+                          </button>
+                        </form>
+                      ) : null}
+                      <Link
+                        href={`/admin/properties/${property.id}`}
+                        className="font-medium text-brand hover:underline"
+                      >
+                        Edit
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

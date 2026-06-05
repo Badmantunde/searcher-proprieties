@@ -144,11 +144,14 @@ function dbRecord(payload: PropertyFormInput) {
   };
 }
 
-function revalidateSite() {
+function revalidateSite(slug?: string, propertyType?: PropertyType) {
   revalidatePath("/");
   revalidatePath("/properties");
   revalidatePath("/properties/developed");
   revalidatePath("/properties/developing");
+  if (slug && propertyType) {
+    revalidatePath(`/properties/${propertyType}/${slug}`);
+  }
 }
 
 export async function loginAction(
@@ -189,7 +192,7 @@ export async function createPropertyAction(
     const { error } = await supabase.from("properties").insert(dbRecord(payload));
     if (error) return { error: error.message };
 
-    revalidateSite();
+    revalidateSite(payload.slug, payload.property_type);
     return { success: "Property created successfully." };
   } catch (err) {
     return {
@@ -231,7 +234,7 @@ export async function updatePropertyAction(
 
     if (error) return { error: error.message };
 
-    revalidateSite();
+    revalidateSite(payload.slug, payload.property_type);
     return { success: "Property updated successfully." };
   } catch (err) {
     return {
@@ -241,6 +244,30 @@ export async function updatePropertyAction(
           : "Something went wrong while updating the property.",
     };
   }
+}
+
+export async function publishPropertyAction(id: string): Promise<void> {
+  const supabase = await createClient();
+  const auth = await requireUser(supabase);
+  if ("error" in auth) throw new Error(auth.error);
+
+  const { data: property, error: fetchError } = await supabase
+    .from("properties")
+    .select("slug, property_type")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError || !property) throw new Error("Property not found.");
+
+  const { error } = await supabase
+    .from("properties")
+    .update({ published: true })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+
+  revalidateSite(property.slug, property.property_type as PropertyType);
+  revalidatePath("/admin/properties");
 }
 
 export async function deletePropertyAction(id: string) {

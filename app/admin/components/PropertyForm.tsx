@@ -466,7 +466,15 @@ export default function PropertyForm({ mode, property }: Props) {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Homepage & publishing</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Only published properties appear on the public website.
+        </p>
         <div className="mt-4 space-y-4">
+          <Checkbox
+            label="Published (visible on website)"
+            name="published"
+            defaultChecked={mode === "create" ? true : property?.published}
+          />
           <Checkbox
             label="Show on homepage featured section"
             name="featured"
@@ -484,11 +492,6 @@ export default function PropertyForm({ mode, property }: Props) {
               defaultValue={property?.featured_secondary_badge ?? ""}
             />
           </div>
-          <Checkbox
-            label="Published (visible on website)"
-            name="published"
-            defaultChecked={property?.published}
-          />
         </div>
       </section>
 

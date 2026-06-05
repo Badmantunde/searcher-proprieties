@@ -43,21 +43,27 @@ async function fetchPublishedByType(
 }
 
 export async function getDevelopedProperties(): Promise<DevelopedProperty[]> {
+  if (!isSupabaseConfigured()) {
+    return STATIC_DEVELOPED;
+  }
+
   const rows = await fetchPublishedByType("developed");
-  const mapped = rows
+  return rows
     .map(rowToDeveloped)
     .filter((item): item is DevelopedProperty => item !== null)
     .map(withGalleryFallback);
-  return mapped.length > 0 ? mapped : STATIC_DEVELOPED;
 }
 
 export async function getDevelopingProjects(): Promise<DevelopingProject[]> {
+  if (!isSupabaseConfigured()) {
+    return STATIC_DEVELOPING;
+  }
+
   const rows = await fetchPublishedByType("developing");
-  const mapped = rows
+  return rows
     .map(rowToDeveloping)
     .filter((item): item is DevelopingProject => item !== null)
     .map(withGalleryFallback);
-  return mapped.length > 0 ? mapped : STATIC_DEVELOPING;
 }
 
 export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
@@ -73,13 +79,11 @@ export async function getFeaturedProperties(): Promise<FeaturedProperty[]> {
     .eq("featured", true)
     .order("updated_at", { ascending: false });
 
-  if (error || !data?.length) return STATIC_FEATURED;
+  if (error || !data?.length) return [];
 
-  const mapped = data
+  return data
     .map((row) => rowToFeatured(normalizePropertyRow(row)))
     .filter((item): item is FeaturedProperty => item !== null);
-
-  return mapped.length > 0 ? mapped : STATIC_FEATURED;
 }
 
 export async function getDevelopedBySlug(
@@ -90,7 +94,10 @@ export async function getDevelopedBySlug(
     const mapped = rowToDeveloped(row);
     if (mapped) return withGalleryFallback(mapped);
   }
-  return STATIC_DEVELOPED.find((p) => p.slug === slug);
+  if (!isSupabaseConfigured()) {
+    return STATIC_DEVELOPED.find((p) => p.slug === slug);
+  }
+  return undefined;
 }
 
 export async function getDevelopingBySlug(
@@ -101,7 +108,10 @@ export async function getDevelopingBySlug(
     const mapped = rowToDeveloping(row);
     if (mapped) return withGalleryFallback(mapped);
   }
-  return STATIC_DEVELOPING.find((p) => p.slug === slug);
+  if (!isSupabaseConfigured()) {
+    return STATIC_DEVELOPING.find((p) => p.slug === slug);
+  }
+  return undefined;
 }
 
 async function getPropertyRowBySlug(
@@ -128,16 +138,13 @@ async function getPropertyRowBySlug(
 export async function getSlugsByType(
   type: PropertyType,
 ): Promise<{ slug: string }[]> {
-  const fallback = type === "developed" ? STATIC_DEVELOPED : STATIC_DEVELOPING;
-
   if (!isSupabaseConfigured()) {
+    const fallback = type === "developed" ? STATIC_DEVELOPED : STATIC_DEVELOPING;
     return fallback.map((p) => ({ slug: p.slug }));
   }
 
   const supabase = getPublicClientOrNull();
-  if (!supabase) {
-    return fallback.map((p) => ({ slug: p.slug }));
-  }
+  if (!supabase) return [];
 
   const { data, error } = await supabase
     .from("properties")
@@ -145,9 +152,7 @@ export async function getSlugsByType(
     .eq("property_type", type)
     .eq("published", true);
 
-  if (error || !data?.length) {
-    return fallback.map((p) => ({ slug: p.slug }));
-  }
+  if (error || !data?.length) return [];
 
   return data.map((row) => ({ slug: row.slug as string }));
 }

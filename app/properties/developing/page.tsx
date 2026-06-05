@@ -5,6 +5,8 @@ import DevelopingHero from "../../components/properties-page/developing/Developi
 import DevelopingGrid from "../../components/properties-page/developing/DevelopingGrid";
 import { getDevelopingProjects } from "@/lib/properties/fetch";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Developing Properties — Searcher Properties",
   description:
