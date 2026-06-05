@@ -108,11 +108,12 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
 
       {slides.length > 1 ? (
         <div className="mx-auto w-full min-w-0 max-w-[1280px] px-4 pt-6 sm:px-8 sm:pt-8 lg:px-16">
-          <div
-            role="tablist"
-            aria-label="Gallery thumbnails"
-            className="scrollbar-hide flex w-full min-w-0 touch-pan-x snap-x snap-mandatory items-center gap-3 overflow-x-auto overscroll-x-contain pb-2 sm:gap-4"
-          >
+          <div className="rounded-xl bg-slate-50 px-4 py-4 sm:rounded-2xl sm:px-6 sm:py-5 lg:px-8">
+            <div
+              role="tablist"
+              aria-label="Gallery thumbnails"
+              className="scrollbar-hide flex w-full min-w-0 touch-pan-x snap-x snap-mandatory items-center gap-3 overflow-x-auto overscroll-x-contain sm:gap-4"
+            >
             {slides.map((src, i) => {
               const active = i === index;
 
@@ -148,6 +149,7 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
                 </button>
               );
             })}
+            </div>
           </div>
         </div>
       ) : null}
