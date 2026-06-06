@@ -9,7 +9,7 @@ export default async function Header() {
   return (
     <section
       id="home"
-      className="relative w-full overflow-hidden text-slate-50"
+      className="relative min-h-[92vh] w-full overflow-hidden text-slate-50 sm:min-h-[720px] lg:min-h-[820px]"
     >
       <Image
         src="/image/image-1-2.png"
@@ -17,9 +17,9 @@ export default async function Header() {
         fill
         priority
         sizes="100vw"
-        className="object-cover"
+        className="object-cover object-[center_30%] scale-105 sm:scale-100 sm:object-center lg:object-[center_40%]"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/45 to-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-black/80 sm:from-black/55 sm:via-black/45 sm:to-black/70" />
 
       <div className="relative z-10 mx-auto flex max-w-[1440px] flex-col px-6 pb-32 sm:px-10 sm:pb-40 lg:px-16 lg:pb-48">
         <div className="flex w-full flex-col items-center pt-32 text-center sm:pt-40 lg:pt-52">

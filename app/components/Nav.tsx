@@ -131,7 +131,7 @@ export default function Nav() {
               onClick={() => setOpen(false)}
             >
               <Image
-                src="/image/image-13-322.png"
+                src="/image/ICON.jpg"
                 alt="Searcher Properties"
                 width={140}
                 height={70}
