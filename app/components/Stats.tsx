@@ -3,7 +3,7 @@ import Reveal from "./Reveal";
 
 const STATS = [
   { value: 150, suffix: "+", label: "Happy Clients" },
-  { value: 50, suffix: "+", label: "Properties Delivered" },
+  { value: 20, suffix: "+", label: "Properties Delivered" },
   { value: 10, suffix: "+", label: "Years Experience" },
 ];
 

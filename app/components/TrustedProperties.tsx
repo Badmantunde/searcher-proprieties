@@ -11,8 +11,8 @@ export default function TrustedProperties() {
             Looking for trusted properties?
           </span>
           <p className="mt-6 text-base leading-relaxed text-slate-800 sm:text-lg lg:text-xl lg:leading-[1.7]">
-            Searcher Properties is a modern real estate company commited to
-            delivery quality homes, smart investments and reliable property
+            Searcher Properties is a modern real estate company committed to
+            delivering quality homes, smart investments and reliable property
             opportunities with transparency and professionalism.
           </p>
 
