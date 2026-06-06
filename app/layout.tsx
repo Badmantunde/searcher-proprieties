@@ -60,7 +60,7 @@ export default function RootLayout({
       lang="en"
       className={`${poppins.variable} ${reemKufi.variable} antialiased`}
     >
-      <body className="min-h-screen bg-white text-slate-900 font-sans">
+      <body className="min-h-screen overflow-x-hidden bg-white font-sans text-slate-900">
         <PageTransition>{children}</PageTransition>
       </body>
     </html>

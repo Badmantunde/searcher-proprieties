@@ -14,7 +14,7 @@ export const revalidate = 60;
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col bg-white">
+    <main className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-white">
       <Nav />
       <Header />
       <TrustedProperties />

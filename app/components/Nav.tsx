@@ -288,7 +288,7 @@ export default function Nav() {
       <div
         id="mobile-menu"
         className={[
-          "fixed inset-0 z-40 lg:hidden",
+          "fixed inset-0 z-40 overflow-x-hidden lg:hidden",
           open ? "" : "pointer-events-none",
         ].join(" ")}
         aria-hidden={!open}

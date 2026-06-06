@@ -170,6 +170,41 @@ export async function getSlugsByType(
   return data.map((row) => ({ slug: row.slug as string }));
 }
 
+export async function getPublishedPropertiesForSitemap(): Promise<
+  Array<{ slug: string; property_type: PropertyType; updated_at: string }>
+> {
+  if (!isSupabaseConfigured()) {
+    return [
+      ...STATIC_DEVELOPED.map((p) => ({
+        slug: p.slug,
+        property_type: "developed" as const,
+        updated_at: new Date().toISOString(),
+      })),
+      ...STATIC_DEVELOPING.map((p) => ({
+        slug: p.slug,
+        property_type: "developing" as const,
+        updated_at: new Date().toISOString(),
+      })),
+    ];
+  }
+
+  const supabase = getPublicClientOrNull();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("properties")
+    .select("slug, property_type, updated_at")
+    .eq("published", true);
+
+  if (error || !data?.length) return [];
+
+  return data.map((row) => ({
+    slug: row.slug as string,
+    property_type: row.property_type as PropertyType,
+    updated_at: row.updated_at as string,
+  }));
+}
+
 export async function getAllPropertiesAdmin(): Promise<PropertyRow[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

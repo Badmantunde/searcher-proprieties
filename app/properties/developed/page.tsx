@@ -17,7 +17,7 @@ export default async function DevelopedPropertiesPage() {
   const items = await getDevelopedProperties();
 
   return (
-    <main className="flex min-h-screen flex-col bg-white">
+    <main className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-white">
       <Nav />
       <DevelopedHero />
       <DevelopedGrid items={items} />

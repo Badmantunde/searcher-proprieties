@@ -22,7 +22,7 @@ export default async function PropertiesPage({
   const showDeveloping = !category || category === "developing";
 
   return (
-    <main className="flex min-h-screen flex-col bg-white">
+    <main className="flex min-h-screen min-w-0 flex-col overflow-x-hidden bg-white">
       <Nav />
       <PropertiesHero />
       {showDeveloped ? <DevelopedProperties query={q} /> : null}

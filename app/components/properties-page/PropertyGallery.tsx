@@ -112,7 +112,7 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
             <div
               role="tablist"
               aria-label="Gallery thumbnails"
-              className="scrollbar-hide flex w-full min-w-0 touch-pan-x snap-x snap-mandatory items-center gap-3 overflow-x-auto overscroll-x-contain sm:gap-4"
+              className="scrollbar-hide flex w-full min-w-0 touch-pan-x snap-x snap-mandatory items-center gap-3 overflow-x-auto overscroll-x-contain py-1 sm:gap-4"
             >
             {slides.map((src, i) => {
               const active = i === index;
@@ -133,7 +133,7 @@ export default function PropertyGallery({ alt, hero, thumbnails }: Props) {
                   }}
                   className={`relative aspect-[4/3] w-28 shrink-0 snap-center overflow-hidden rounded-lg border-[3px] bg-slate-200 transition-all duration-300 ease-out sm:w-32 sm:rounded-xl md:w-36 lg:w-40 ${
                     active
-                      ? "scale-[1.04] border-[#0046ff] shadow-lg shadow-brand/20"
+                      ? "border-[#0046ff] shadow-lg shadow-brand/20 max-sm:scale-100 sm:scale-[1.04]"
                       : "border-slate-300 opacity-70 hover:scale-[1.02] hover:opacity-100"
                   }`}
                 >
