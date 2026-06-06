@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import JsonLd from "../../../components/JsonLd";
 import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
 import PropertyGallery from "../../../components/properties-page/PropertyGallery";
@@ -9,6 +10,8 @@ import {
   getDevelopingBySlug,
   getSlugsByType,
 } from "@/lib/properties/fetch";
+import { buildDevelopingPropertyMetadata } from "@/lib/seo/metadata";
+import { developingListingSchema } from "@/lib/seo/schema";
 
 type RouteParams = { slug: string };
 
@@ -23,11 +26,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const project = await getDevelopingBySlug(slug);
-  if (!project) return { title: "Project not found — Searcher Properties" };
-  return {
-    title: `${project.title} — Searcher Properties`,
-    description: `Pre-launch investment opportunity at ${project.location}. ${project.progress}% complete, expected ${project.completion}. ${project.leaseLabel}.`,
-  };
+  if (!project) {
+    return {
+      title: "Project not found",
+      robots: { index: false, follow: false },
+    };
+  }
+  return buildDevelopingPropertyMetadata(project);
 }
 
 export default async function DevelopingDetailPage({
@@ -41,6 +46,7 @@ export default async function DevelopingDetailPage({
 
   return (
     <main className="flex min-h-screen flex-col overflow-x-hidden bg-white">
+      <JsonLd data={developingListingSchema(project)} />
       <Nav />
 
       <PropertyGallery

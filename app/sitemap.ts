@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getPublishedPropertiesForSitemap } from "@/lib/properties/fetch";
-
-const SITE_URL = "https://searcherproperties.com";
+import { SITE_URL } from "@/lib/seo/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const properties = await getPublishedPropertiesForSitemap();

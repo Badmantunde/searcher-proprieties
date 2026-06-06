@@ -6,12 +6,14 @@ import Pillars from "../components/about-page/Pillars";
 import Journey from "../components/about-page/Journey";
 import WhyChoose from "../components/about-page/WhyChoose";
 import LocationMap from "../components/LocationMap";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "About — Searcher Properties",
+export const metadata: Metadata = buildPageMetadata({
+  title: "About",
   description:
     "Searcher Properties is a trusted real estate company delivering premium developments and smart property investments across Lagos and beyond.",
-};
+  path: "/about",
+});
 
 export default function AboutPage() {
   return (

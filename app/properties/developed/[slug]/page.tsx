@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import JsonLd from "../../../components/JsonLd";
 import Nav from "../../../components/Nav";
 import Footer from "../../../components/Footer";
 import PropertyGallery from "../../../components/properties-page/PropertyGallery";
@@ -9,6 +10,8 @@ import {
   getDevelopedBySlug,
   getSlugsByType,
 } from "@/lib/properties/fetch";
+import { buildDevelopedPropertyMetadata } from "@/lib/seo/metadata";
+import { developedListingSchema } from "@/lib/seo/schema";
 
 type RouteParams = { slug: string };
 
@@ -23,11 +26,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const property = await getDevelopedBySlug(slug);
-  if (!property) return { title: "Property not found — Searcher Properties" };
-  return {
-    title: `${property.title} — Searcher Properties`,
-    description: property.longDescription,
-  };
+  if (!property) {
+    return {
+      title: "Property not found",
+      robots: { index: false, follow: false },
+    };
+  }
+  return buildDevelopedPropertyMetadata(property);
 }
 
 export default async function DevelopedDetailPage({
@@ -41,6 +46,7 @@ export default async function DevelopedDetailPage({
 
   return (
     <main className="flex min-h-screen flex-col overflow-x-hidden bg-white">
+      <JsonLd data={developedListingSchema(property)} />
       <Nav />
 
       <PropertyGallery

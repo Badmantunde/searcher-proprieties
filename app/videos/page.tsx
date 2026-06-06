@@ -3,12 +3,14 @@ import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import VideosHero from "../components/videos-page/VideosHero";
 import VideosGrid from "../components/videos-page/VideosGrid";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Property Videos — Searcher Properties",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Property Videos",
   description:
-    "Watch the Searcher Properties showcase — a cinematic walkthrough of our developments.",
-};
+    "Watch the Searcher Properties showcase — a cinematic walkthrough of our developments across Lagos.",
+  path: "/videos",
+});
 
 export default function VideosPage() {
   return (

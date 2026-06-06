@@ -4,13 +4,15 @@ import Footer from "../components/Footer";
 import PropertiesHero from "../components/properties-page/PropertiesHero";
 import DevelopedProperties from "../components/properties-page/DevelopedProperties";
 import DevelopingProjects from "../components/properties-page/DevelopingProjects";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const revalidate = 60;
-export const metadata: Metadata = {
-  title: "Properties — Searcher Properties",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Properties in Lagos",
   description:
-    "Explore Searcher Properties' complete collection of luxury completed homes and developing investment projects.",
-};
+    "Explore Searcher Properties' complete collection of luxury completed homes and developing investment projects across Lagos.",
+  path: "/properties",
+});
 
 export default async function PropertiesPage({
   searchParams,
