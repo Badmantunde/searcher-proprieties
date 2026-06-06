@@ -124,6 +124,10 @@ export function buildDevelopedPropertyMetadata(
       property.priceRange ? ` From ${property.priceRange}.` : ""
     }`.trim(),
   );
+
+  return buildPageMetadata({
+    title: `${property.title} in ${property.location}`,
+    description,
     path,
     image: property.gallery.hero || property.image,
     imageAlt: `${property.title} — luxury property in ${property.location}, Lagos`,
